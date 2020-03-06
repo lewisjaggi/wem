@@ -1,4 +1,8 @@
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
 
@@ -8,6 +12,17 @@ import edu.uci.ics.crawler4j.crawler.Page;
 import edu.uci.ics.crawler4j.crawler.WebCrawler;
 import edu.uci.ics.crawler4j.parser.HtmlParseData;
 import edu.uci.ics.crawler4j.url.WebURL;
+import org.apache.solr.client.solrj.SolrClient;
+import org.apache.solr.client.solrj.SolrServerException;
+import org.apache.solr.client.solrj.impl.HttpSolrClient;
+import org.apache.solr.client.solrj.response.QueryResponse;
+import org.apache.solr.client.solrj.response.UpdateResponse;
+import org.apache.solr.common.SolrDocument;
+import org.apache.solr.common.SolrDocumentList;
+import org.apache.solr.common.SolrInputDocument;
+import org.apache.solr.common.params.MapSolrParams;
+
+import static jdk.nashorn.internal.objects.Global.print;
 
 public class Labo1Crawler extends WebCrawler {
 
@@ -61,6 +76,13 @@ public class Labo1Crawler extends WebCrawler {
         String parentUrl = page.getWebURL().getParentUrl();
         String anchor = page.getWebURL().getAnchor();
 
+        final SolrClient client = getSolrClient();
+
+
+
+
+
+
         logger.debug("Docid: {}", docid);
         logger.info("URL: {}", url);
         logger.debug("Domain: '{}'", domain);
@@ -89,5 +111,49 @@ public class Labo1Crawler extends WebCrawler {
         }
 
         logger.debug("=============");
+    }
+
+    public HttpSolrClient getSolrClient() {
+        final String solrUrl = "http://localhost:8983/solr";
+        return new HttpSolrClient.Builder(solrUrl)
+                .withConnectionTimeout(10000)
+                .withSocketTimeout(60000)
+                .build();
+    }
+
+    public void querying() throws IOException, SolrServerException {
+        final SolrClient client = getSolrClient();
+
+        final Map<String, String> queryParamMap = new HashMap<String, String>();
+        queryParamMap.put("q", "*:*");
+        queryParamMap.put("fl", "id, name");
+        queryParamMap.put("sort", "id asc");
+        MapSolrParams queryParams = new MapSolrParams(queryParamMap);
+
+        final QueryResponse response = client.query("techproducts", queryParams);
+        final SolrDocumentList documents = response.getResults();
+
+        print("Found " + documents.getNumFound() + " documents");
+        for(SolrDocument document : documents) {
+            final String id = (String) document.getFirstValue("id");
+            final String name = (String) document.getFirstValue("name");
+            indexing(client, id, name);
+        }
+    }
+
+    public void indexing(SolrClient client, String id, String name) {
+        final SolrInputDocument doc = new SolrInputDocument();
+        doc.addField("id", id);
+        doc.addField("name", name);
+
+        try {
+            final UpdateResponse updateResponse = client.add("techproducts", doc);
+            // Indexed documents must be committed
+            client.commit("techproducts");
+        } catch (SolrServerException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }
