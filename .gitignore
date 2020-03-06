@@ -131,3 +131,7 @@ buildNumber.properties
 
 # End of https://www.gitignore.io/api/java,maven,intellij
 labo1/.idea/
+
+.DS_Store
+
+labo1/tmp/
