@@ -69,13 +69,13 @@ public class Labo1Crawler extends WebCrawler {
         String parentUrl = page.getWebURL().getParentUrl();
         String anchor = page.getWebURL().getAnchor();
 
-        logger.debug("DocId: {}", docId);
+        /*logger.debug("DocId: {}", docId);
         logger.info("URL: {}", url);
         logger.debug("Domain: '{}'", domain);
         logger.debug("Sub-domain: '{}'", subDomain);
         logger.debug("Path: '{}'", path);
         logger.debug("Parent page: {}", parentUrl);
-        logger.debug("Anchor text: {}", anchor);
+        logger.debug("Anchor text: {}", anchor);*/
 
         if (page.getParseData() instanceof HtmlParseData) {
             HtmlParseData htmlParseData = (HtmlParseData) page.getParseData();
@@ -86,15 +86,13 @@ public class Labo1Crawler extends WebCrawler {
 
             indexing1(page);
             indexing2(docId, url, domain, subDomain, path, parentUrl, anchor, text, html, links);
-            indexing3(docId, url, domain, subDomain, path, parentUrl, anchor, text, html, links);
 
-
-            logger.debug("Text length: {}", text.length());
+            /*logger.debug("Text length: {}", text.length());
             logger.debug("Html length: {}", html.length());
-            logger.debug("Number of outgoing links: {}", links.size());
+            logger.debug("Number of outgoing links: {}", links.size());*/
         }
 
-        Header[] responseHeaders = page.getFetchResponseHeaders();
+        /*Header[] responseHeaders = page.getFetchResponseHeaders();
         if (responseHeaders != null) {
             logger.debug("Response headers:");
             for (Header header : responseHeaders) {
@@ -102,7 +100,7 @@ public class Labo1Crawler extends WebCrawler {
             }
         }
 
-        logger.debug("=============");
+        logger.debug("=============");*/
     }
 
     public HttpSolrClient getSolrClient() {
@@ -141,33 +139,12 @@ public class Labo1Crawler extends WebCrawler {
         doc.addField("links", links);
 
         Document jHtml = Jsoup.parse(html);
+        // logger.debug(jHtml.toString());
 
         try {
             client.add(CORE_NAME2, doc);
             // Indexed documents must be committed
             client.commit(CORE_NAME2);
-        } catch (SolrServerException | IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public void indexing3(int docId, String url, String domain, String subDomain, String path, String parentUrl, String anchor, String text, String html, Set<WebURL> links) {
-        final SolrInputDocument doc = new SolrInputDocument();
-        doc.addField("docId", docId);
-        doc.addField("url", url);
-        doc.addField("domain", domain);
-        doc.addField("subDomain", subDomain);
-        doc.addField("path", path);
-        doc.addField("parentUrl", parentUrl);
-        doc.addField("anchor", anchor);
-        doc.addField("text", text);
-        doc.addField("html", html);
-        doc.addField("links", links);
-
-        try {
-            client.add(CORE_NAME3, doc);
-            // Indexed documents must be committed
-            client.commit(CORE_NAME3);
         } catch (SolrServerException | IOException e) {
             e.printStackTrace();
         }
