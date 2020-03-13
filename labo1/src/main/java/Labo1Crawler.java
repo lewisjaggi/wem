@@ -146,9 +146,9 @@ public class Labo1Crawler extends WebCrawler {
         doc.addField("html", html);
 
         try {
-            final UpdateResponse updateResponse = client.add("default", doc);
+            final UpdateResponse updateResponse = client.add("wemlabo1", doc);
             // Indexed documents must be committed
-            client.commit("default");
+            client.commit("wemlabo1");
         } catch (SolrServerException e) {
             e.printStackTrace();
         } catch (IOException e) {
