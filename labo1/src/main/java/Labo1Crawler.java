@@ -84,10 +84,9 @@ public class Labo1Crawler extends WebCrawler {
             Set<WebURL> links = htmlParseData.getOutgoingUrls();
 
 
-            indexing3(page);
-
-            indexing1(docId, url, domain, subDomain, path, parentUrl, anchor, text, html, links);
+            indexing1(page);
             indexing2(docId, url, domain, subDomain, path, parentUrl, anchor, text, html, links);
+            indexing3(docId, url, domain, subDomain, path, parentUrl, anchor, text, html, links);
 
 
             logger.debug("Text length: {}", text.length());
@@ -114,35 +113,15 @@ public class Labo1Crawler extends WebCrawler {
                 .build();
     }
 
-    public void indexing1(int docId, String url, String domain, String subDomain, String path, String parentUrl, String anchor, String text, String html, Set<WebURL> links) {
-        final SolrInputDocument doc = new SolrInputDocument();
-        doc.addField("docId", docId);
-        doc.addField("url", url);
-        doc.addField("domain", domain);
-        doc.addField("subDomain", subDomain);
-        doc.addField("path", path);
-        doc.addField("parentUrl", parentUrl);
-        doc.addField("anchor", anchor);
-        doc.addField("text", text);
-        doc.addField("html", html);
-        doc.addField("links", links);
 
-        try {
-            client.add(CORE_NAME2, doc);
-            // Indexed documents must be committed
-            client.commit(CORE_NAME2);
-        } catch (SolrServerException | IOException e) {
-            e.printStackTrace();
-        }
-    }
-    public void indexing3(Page page) {
+    public void indexing1(Page page) {
         final SolrInputDocument doc = new SolrInputDocument();
         doc.addField("page", page);
 
         try {
-            client.add(CORE_NAME3, doc);
+            client.add(CORE_NAME1, doc);
             // Indexed documents must be committed
-            client.commit(CORE_NAME3);
+            client.commit(CORE_NAME1);
         } catch (SolrServerException | IOException e) {
             e.printStackTrace();
         }
@@ -167,6 +146,28 @@ public class Labo1Crawler extends WebCrawler {
             client.add(CORE_NAME2, doc);
             // Indexed documents must be committed
             client.commit(CORE_NAME2);
+        } catch (SolrServerException | IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void indexing3(int docId, String url, String domain, String subDomain, String path, String parentUrl, String anchor, String text, String html, Set<WebURL> links) {
+        final SolrInputDocument doc = new SolrInputDocument();
+        doc.addField("docId", docId);
+        doc.addField("url", url);
+        doc.addField("domain", domain);
+        doc.addField("subDomain", subDomain);
+        doc.addField("path", path);
+        doc.addField("parentUrl", parentUrl);
+        doc.addField("anchor", anchor);
+        doc.addField("text", text);
+        doc.addField("html", html);
+        doc.addField("links", links);
+
+        try {
+            client.add(CORE_NAME3, doc);
+            // Indexed documents must be committed
+            client.commit(CORE_NAME3);
         } catch (SolrServerException | IOException e) {
             e.printStackTrace();
         }
