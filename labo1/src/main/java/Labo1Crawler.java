@@ -16,7 +16,8 @@ import org.apache.solr.common.SolrInputDocument;
 
 public class Labo1Crawler extends WebCrawler {
 
-    private static final String  CORE_NAME = "wemlabo1";
+    private static final String  CORE_NAME1 = "wemlabo1";
+    private static final String  CORE_NAME2 = "wemlabo2";
     private static final Pattern IMAGE_EXTENSIONS = Pattern.compile(".*\\.(bmp|gif|jpg|png)$");
 
     private AtomicInteger numSeenImages;
@@ -55,6 +56,8 @@ public class Labo1Crawler extends WebCrawler {
      */
     @Override
     public void visit(Page page) {
+        indexing1(page);
+
         int docId = page.getWebURL().getDocid();
         String url = page.getWebURL().getURL();
         String domain = page.getWebURL().getDomain();
@@ -77,7 +80,7 @@ public class Labo1Crawler extends WebCrawler {
             String html = htmlParseData.getHtml();
             Set<WebURL> links = htmlParseData.getOutgoingUrls();
 
-            indexing(docId, url, domain, subDomain, path, parentUrl, anchor, text, html, links);
+            indexing2(docId, url, domain, subDomain, path, parentUrl, anchor, text, html, links);
 
             logger.debug("Text length: {}", text.length());
             logger.debug("Html length: {}", html.length());
@@ -103,7 +106,20 @@ public class Labo1Crawler extends WebCrawler {
                 .build();
     }
 
-    public void indexing(int docId, String url, String domain, String subDomain, String path, String parentUrl, String anchor, String text, String html, Set<WebURL> links) {
+    public void indexing1(Page page) {
+        final SolrInputDocument doc = new SolrInputDocument();
+        doc.addField("page", page);
+
+        try {
+            client.add(CORE_NAME1, doc);
+            // Indexed documents must be committed
+            client.commit(CORE_NAME1);
+        } catch (SolrServerException | IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void indexing2(int docId, String url, String domain, String subDomain, String path, String parentUrl, String anchor, String text, String html, Set<WebURL> links) {
         final SolrInputDocument doc = new SolrInputDocument();
         doc.addField("docId", docId);
         doc.addField("url", url);
@@ -117,9 +133,9 @@ public class Labo1Crawler extends WebCrawler {
         doc.addField("links", links);
 
         try {
-            client.add(CORE_NAME, doc);
+            client.add(CORE_NAME2, doc);
             // Indexed documents must be committed
-            client.commit(CORE_NAME);
+            client.commit(CORE_NAME2);
         } catch (SolrServerException | IOException e) {
             e.printStackTrace();
         }
