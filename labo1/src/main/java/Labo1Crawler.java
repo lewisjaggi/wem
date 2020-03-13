@@ -2,7 +2,6 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
 
@@ -22,10 +21,9 @@ import org.apache.solr.common.SolrDocumentList;
 import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.common.params.MapSolrParams;
 
-import static jdk.nashorn.internal.objects.Global.print;
-
 public class Labo1Crawler extends WebCrawler {
 
+    private static final String  CORE_NAME = "wemlabo1";
     private static final Pattern IMAGE_EXTENSIONS = Pattern.compile(".*\\.(bmp|gif|jpg|png)$");
 
     private AtomicInteger numSeenImages;
@@ -126,7 +124,7 @@ public class Labo1Crawler extends WebCrawler {
         final QueryResponse response = client.query("techproducts", queryParams);
         final SolrDocumentList documents = response.getResults();
 
-        print("Found " + documents.getNumFound() + " documents");
+        System.out.println("Found " + documents.getNumFound() + " documents");
         for(SolrDocument document : documents) {
             final String id = (String) document.getFirstValue("id");
             final String name = (String) document.getFirstValue("name");
@@ -146,12 +144,10 @@ public class Labo1Crawler extends WebCrawler {
         doc.addField("html", html);
 
         try {
-            final UpdateResponse updateResponse = client.add("wemlabo1", doc);
+            final UpdateResponse updateResponse = client.add(CORE_NAME, doc);
             // Indexed documents must be committed
-            client.commit("wemlabo1");
-        } catch (SolrServerException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
+            client.commit(CORE_NAME);
+        } catch (SolrServerException | IOException e) {
             e.printStackTrace();
         }
     }
