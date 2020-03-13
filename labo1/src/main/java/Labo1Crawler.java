@@ -15,7 +15,7 @@ import org.apache.solr.client.solrj.impl.HttpSolrClient;
 import org.apache.solr.common.SolrInputDocument;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
-import
+
 
 public class Labo1Crawler extends WebCrawler {
 
@@ -60,7 +60,6 @@ public class Labo1Crawler extends WebCrawler {
      */
     @Override
     public void visit(Page page) {
-        indexing1(page);
 
         int docId = page.getWebURL().getDocid();
         String url = page.getWebURL().getURL();
@@ -84,7 +83,12 @@ public class Labo1Crawler extends WebCrawler {
             String html = htmlParseData.getHtml();
             Set<WebURL> links = htmlParseData.getOutgoingUrls();
 
+
             indexing3(page);
+
+            indexing1(docId, url, domain, subDomain, path, parentUrl, anchor, text, html, links);
+            indexing2(docId, url, domain, subDomain, path, parentUrl, anchor, text, html, links);
+
 
             logger.debug("Text length: {}", text.length());
             logger.debug("Html length: {}", html.length());
@@ -110,14 +114,23 @@ public class Labo1Crawler extends WebCrawler {
                 .build();
     }
 
-    public void indexing1(Page page) {
+    public void indexing1(int docId, String url, String domain, String subDomain, String path, String parentUrl, String anchor, String text, String html, Set<WebURL> links) {
         final SolrInputDocument doc = new SolrInputDocument();
-        doc.addField("page", page);
+        doc.addField("docId", docId);
+        doc.addField("url", url);
+        doc.addField("domain", domain);
+        doc.addField("subDomain", subDomain);
+        doc.addField("path", path);
+        doc.addField("parentUrl", parentUrl);
+        doc.addField("anchor", anchor);
+        doc.addField("text", text);
+        doc.addField("html", html);
+        doc.addField("links", links);
 
         try {
-            client.add(CORE_NAME1, doc);
+            client.add(CORE_NAME2, doc);
             // Indexed documents must be committed
-            client.commit(CORE_NAME1);
+            client.commit(CORE_NAME2);
         } catch (SolrServerException | IOException e) {
             e.printStackTrace();
         }

@@ -135,3 +135,6 @@ labo1/.idea/
 .DS_Store
 
 labo1/tmp/
+
+.idea
+.idea/
