@@ -15,6 +15,7 @@ import org.apache.solr.client.solrj.impl.HttpSolrClient;
 import org.apache.solr.common.SolrInputDocument;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
 
 
 public class Labo1Crawler extends WebCrawler {
@@ -139,8 +140,8 @@ public class Labo1Crawler extends WebCrawler {
         doc.addField("links", links);
 
         Document jHtml = Jsoup.parse(html);
-        // logger.debug(jHtml.toString());
-
+        Element masthead = jHtml.select("div.titlebar-title").first();
+        doc.addField("title", masthead.text());
         try {
             client.add(CORE_NAME2, doc);
             // Indexed documents must be committed
