@@ -55,7 +55,7 @@ public class Labo1Crawler extends WebCrawler {
      */
     @Override
     public void visit(Page page) {
-        String docId = Integer.toString(page.getWebURL().getDocid());
+        int docId = page.getWebURL().getDocid();
         String url = page.getWebURL().getURL();
         String domain = page.getWebURL().getDomain();
         String path = page.getWebURL().getPath();
@@ -77,7 +77,7 @@ public class Labo1Crawler extends WebCrawler {
             String html = htmlParseData.getHtml();
             Set<WebURL> links = htmlParseData.getOutgoingUrls();
 
-            indexing(docId, url, domain, subDomain, path, parentUrl, anchor, text, html);
+            indexing(docId, url, domain, subDomain, path, parentUrl, anchor, text, html, links);
 
             logger.debug("Text length: {}", text.length());
             logger.debug("Html length: {}", html.length());
@@ -103,7 +103,7 @@ public class Labo1Crawler extends WebCrawler {
                 .build();
     }
 
-    public void indexing(String docId, String url, String domain, String subDomain, String path, String parentUrl, String anchor, String text, String html) {
+    public void indexing(int docId, String url, String domain, String subDomain, String path, String parentUrl, String anchor, String text, String html, Set<WebURL> links) {
         final SolrInputDocument doc = new SolrInputDocument();
         doc.addField("docId", docId);
         doc.addField("url", url);
@@ -114,6 +114,7 @@ public class Labo1Crawler extends WebCrawler {
         doc.addField("anchor", anchor);
         doc.addField("text", text);
         doc.addField("html", html);
+        doc.addField("links", links);
 
         try {
             client.add(CORE_NAME, doc);
