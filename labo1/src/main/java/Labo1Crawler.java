@@ -1,6 +1,4 @@
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
@@ -14,12 +12,7 @@ import edu.uci.ics.crawler4j.url.WebURL;
 import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.impl.HttpSolrClient;
-import org.apache.solr.client.solrj.response.QueryResponse;
-import org.apache.solr.client.solrj.response.UpdateResponse;
-import org.apache.solr.common.SolrDocument;
-import org.apache.solr.common.SolrDocumentList;
 import org.apache.solr.common.SolrInputDocument;
-import org.apache.solr.common.params.MapSolrParams;
 
 public class Labo1Crawler extends WebCrawler {
 
@@ -35,10 +28,6 @@ public class Labo1Crawler extends WebCrawler {
      * example, we pass an AtomicInteger to all crawlers and they increment it whenever they see a url which points
      * to an image.
      */
-    public void BasicCrawler(AtomicInteger numSeenImages) {
-        this.numSeenImages = numSeenImages;
-    }
-
     public Labo1Crawler(AtomicInteger numSeenImages) {
         this.numSeenImages = numSeenImages;
     }
@@ -66,7 +55,7 @@ public class Labo1Crawler extends WebCrawler {
      */
     @Override
     public void visit(Page page) {
-        String docid = Integer.toString(page.getWebURL().getDocid());
+        String docId = Integer.toString(page.getWebURL().getDocid());
         String url = page.getWebURL().getURL();
         String domain = page.getWebURL().getDomain();
         String path = page.getWebURL().getPath();
@@ -74,7 +63,7 @@ public class Labo1Crawler extends WebCrawler {
         String parentUrl = page.getWebURL().getParentUrl();
         String anchor = page.getWebURL().getAnchor();
 
-        logger.debug("Docid: {}", docid);
+        logger.debug("DocId: {}", docId);
         logger.info("URL: {}", url);
         logger.debug("Domain: '{}'", domain);
         logger.debug("Sub-domain: '{}'", subDomain);
@@ -88,7 +77,7 @@ public class Labo1Crawler extends WebCrawler {
             String html = htmlParseData.getHtml();
             Set<WebURL> links = htmlParseData.getOutgoingUrls();
 
-            indexing(docid, url, domain, subDomain, path, parentUrl, anchor, text, html);
+            indexing(docId, url, domain, subDomain, path, parentUrl, anchor, text, html);
 
             logger.debug("Text length: {}", text.length());
             logger.debug("Html length: {}", html.length());
@@ -114,26 +103,9 @@ public class Labo1Crawler extends WebCrawler {
                 .build();
     }
 
-    public void querying() throws IOException, SolrServerException {
-        final Map<String, String> queryParamMap = new HashMap<String, String>();
-        queryParamMap.put("q", "*:*");
-        queryParamMap.put("fl", "id, name");
-        queryParamMap.put("sort", "id asc");
-        MapSolrParams queryParams = new MapSolrParams(queryParamMap);
-
-        final QueryResponse response = client.query("techproducts", queryParams);
-        final SolrDocumentList documents = response.getResults();
-
-        System.out.println("Found " + documents.getNumFound() + " documents");
-        for(SolrDocument document : documents) {
-            final String id = (String) document.getFirstValue("id");
-            final String name = (String) document.getFirstValue("name");
-        }
-    }
-
-    public void indexing(String docid, String url, String domain, String subDomain, String path, String parentUrl, String anchor, String text, String html) {
+    public void indexing(String docId, String url, String domain, String subDomain, String path, String parentUrl, String anchor, String text, String html) {
         final SolrInputDocument doc = new SolrInputDocument();
-        doc.addField("docid", docid);
+        doc.addField("docId", docId);
         doc.addField("url", url);
         doc.addField("domain", domain);
         doc.addField("subDomain", subDomain);
@@ -144,7 +116,7 @@ public class Labo1Crawler extends WebCrawler {
         doc.addField("html", html);
 
         try {
-            final UpdateResponse updateResponse = client.add(CORE_NAME, doc);
+            client.add(CORE_NAME, doc);
             // Indexed documents must be committed
             client.commit(CORE_NAME);
         } catch (SolrServerException | IOException e) {
