@@ -57,9 +57,9 @@ public class Labo1CrawlController {
         // For each crawl, you need to add some seed urls. These are the first
         // URLs that are fetched and then the crawler starts following links
         // which are found in these pages
-        controller.addSeed("https://www.ics.uci.edu/");
-        controller.addSeed("https://www.ics.uci.edu/~lopes/");
-        controller.addSeed("https://www.ics.uci.edu/~welling/");
+        controller.addSeed("http://www.allocine.fr/film/fichefilm_gen_cfilm=269232.html");
+        controller.addSeed("http://www.allocine.fr/film/fichefilm_gen_cfilm=254043.html");
+        controller.addSeed("http://www.allocine.fr/film/fichefilm_gen_cfilm=259759.html");
 
         // Number of threads to use during crawling. Increasing this typically makes crawling faster. But crawling
         // speed depends on many other factors as well. You can experiment with this to figure out what number of

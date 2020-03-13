@@ -13,11 +13,15 @@ import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.impl.HttpSolrClient;
 import org.apache.solr.common.SolrInputDocument;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import
 
 public class Labo1Crawler extends WebCrawler {
 
     private static final String  CORE_NAME1 = "wemlabo1";
     private static final String  CORE_NAME2 = "wemlabo2";
+    private static final String  CORE_NAME3 = "wemlabo3";
     private static final Pattern IMAGE_EXTENSIONS = Pattern.compile(".*\\.(bmp|gif|jpg|png)$");
 
     private AtomicInteger numSeenImages;
@@ -47,7 +51,7 @@ public class Labo1Crawler extends WebCrawler {
         }
 
         // Only accept the url if it is in the "www.ics.uci.edu" domain and protocol is "http".
-        return href.startsWith("https://www.ics.uci.edu/");
+        return href.startsWith("http://www.allocine.fr/film/");
     }
 
     /**
@@ -80,7 +84,7 @@ public class Labo1Crawler extends WebCrawler {
             String html = htmlParseData.getHtml();
             Set<WebURL> links = htmlParseData.getOutgoingUrls();
 
-            indexing2(docId, url, domain, subDomain, path, parentUrl, anchor, text, html, links);
+            indexing3(page);
 
             logger.debug("Text length: {}", text.length());
             logger.debug("Html length: {}", html.length());
@@ -118,6 +122,18 @@ public class Labo1Crawler extends WebCrawler {
             e.printStackTrace();
         }
     }
+    public void indexing3(Page page) {
+        final SolrInputDocument doc = new SolrInputDocument();
+        doc.addField("page", page);
+
+        try {
+            client.add(CORE_NAME3, doc);
+            // Indexed documents must be committed
+            client.commit(CORE_NAME3);
+        } catch (SolrServerException | IOException e) {
+            e.printStackTrace();
+        }
+    }
 
     public void indexing2(int docId, String url, String domain, String subDomain, String path, String parentUrl, String anchor, String text, String html, Set<WebURL> links) {
         final SolrInputDocument doc = new SolrInputDocument();
@@ -131,6 +147,8 @@ public class Labo1Crawler extends WebCrawler {
         doc.addField("text", text);
         doc.addField("html", html);
         doc.addField("links", links);
+
+        Document jHtml = Jsoup.parse(html);
 
         try {
             client.add(CORE_NAME2, doc);
