@@ -1,8 +1,5 @@
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
 
@@ -16,7 +13,11 @@ import edu.uci.ics.crawler4j.url.WebURL;
 import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.impl.HttpSolrClient;
+import org.apache.solr.client.solrj.response.QueryResponse;
+import org.apache.solr.common.SolrDocument;
+import org.apache.solr.common.SolrDocumentList;
 import org.apache.solr.common.SolrInputDocument;
+import org.apache.solr.common.params.MapSolrParams;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -40,10 +41,18 @@ public class Labo1Crawler extends WebCrawler {
      *                      example, we pass an AtomicInteger to all crawlers and they increment it whenever they see a url which points
      *                      to an image.
      */
-    public Labo1Crawler(AtomicInteger numSeenImages) throws IOException, SolrServerException {
+    public Labo1Crawler(AtomicInteger numSeenImages, Boolean clear) throws IOException, SolrServerException {
 
         this.numSeenImages = numSeenImages;
-        this.clear();
+        if (clear) {
+            this.clear();
+        }
+    }
+
+    public Labo1Crawler(AtomicInteger numSeenImages) throws IOException, SolrServerException {
+
+        this(numSeenImages, false);
+
     }
 
     /**
@@ -78,14 +87,6 @@ public class Labo1Crawler extends WebCrawler {
         String parentUrl = page.getWebURL().getParentUrl();
         String anchor = page.getWebURL().getAnchor();
 
-        /*logger.debug("DocId: {}", docId);
-        logger.info("URL: {}", url);
-        logger.debug("Domain: '{}'", domain);
-        logger.debug("Sub-domain: '{}'", subDomain);
-        logger.debug("Path: '{}'", path);
-        logger.debug("Parent page: {}", parentUrl);
-        logger.debug("Anchor text: {}", anchor);*/
-
         if (page.getParseData() instanceof HtmlParseData) {
             HtmlParseData htmlParseData = (HtmlParseData) page.getParseData();
             String text = htmlParseData.getText();
@@ -95,21 +96,7 @@ public class Labo1Crawler extends WebCrawler {
 
             //indexing1(page);
             indexing2(docId, url, domain, subDomain, path, parentUrl, anchor, text, html, links);
-
-            /*logger.debug("Text length: {}", text.length());
-            logger.debug("Html length: {}", html.length());
-            logger.debug("Number of outgoing links: {}", links.size());*/
         }
-
-        /*Header[] responseHeaders = page.getFetchResponseHeaders();
-        if (responseHeaders != null) {
-            logger.debug("Response headers:");
-            for (Header header : responseHeaders) {
-                logger.debug("\t{}: {}", header.getName(), header.getValue());
-            }
-        }
-
-        logger.debug("=============");*/
     }
 
     private HttpSolrClient getSolrClient() {
@@ -161,15 +148,9 @@ public class Labo1Crawler extends WebCrawler {
         }
         doc.addField("notes", gson.toJson(notes.toString()));
 
-        for (Element htmlnote : htmlnotes.children()) {
-            notes.put(htmlnote.getElementsByClass("rating-title").first().text(), htmlnote.getElementsByClass("stareval-note").first().text());
-        }
-        doc.addField("notes", gson.toJson(notes.toString()));
-
         //get date
         Element date = jHtml.getElementsByClass("date").first();
         doc.addField("date", date.text());
-
 
         //get real
         Elements real = jHtml.select("meta");
@@ -211,5 +192,27 @@ public class Labo1Crawler extends WebCrawler {
         client.commit(CORE_NAME1);
         client.deleteByQuery(CORE_NAME2, "*");
         client.commit(CORE_NAME2);
+    }
+
+    public SolrDocumentList query(String title, String realisateur) {
+        try {
+            final Map<String, String> queryParamMap = new HashMap<String, String>();
+            queryParamMap.put("q", "*:*");
+            queryParamMap.put("fq", "title:" + title);
+            queryParamMap.put("fq", "realisateur:" + realisateur);
+            queryParamMap.put("fl", "id, title, realisateur, synopsis, score");
+
+            final QueryResponse response;
+            MapSolrParams queryParams = new MapSolrParams(queryParamMap);
+
+            response = client.query(CORE_NAME2, queryParams);
+
+            return response.getResults();
+        } catch (SolrServerException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 }

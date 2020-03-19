@@ -1,3 +1,6 @@
+import java.io.File;
+import java.io.FileWriter;
+import java.time.LocalDateTime;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import edu.uci.ics.crawler4j.crawler.CrawlConfig;
@@ -5,10 +8,38 @@ import edu.uci.ics.crawler4j.crawler.CrawlController;
 import edu.uci.ics.crawler4j.fetcher.PageFetcher;
 import edu.uci.ics.crawler4j.robotstxt.RobotstxtConfig;
 import edu.uci.ics.crawler4j.robotstxt.RobotstxtServer;
+import org.apache.solr.common.SolrDocument;
+import org.apache.solr.common.SolrDocumentList;
 
 public class Labo1CrawlController {
 
     public static void main(String[] args) throws Exception {
+        //crawl();
+        querying();
+    }
+
+    private static void querying() throws Exception {
+        AtomicInteger numSeenImages = new AtomicInteger();
+        Labo1Crawler labo1Crawler = new Labo1Crawler(numSeenImages);
+
+        SolrDocumentList results = labo1Crawler.query("RADIOACTIVE", "Marjane Satrapi");
+        if (results != null) {
+            String filename = LocalDateTime.now().toString();
+            File myObj = new File(filename);
+            if (myObj.createNewFile()) {
+                FileWriter myWriter = new FileWriter(filename);
+                for (SolrDocument result : results
+                ) {
+                    myWriter.write(result.toString());
+
+                    myWriter.write("\n\n");
+                }
+                myWriter.close();
+            }
+        }
+    }
+
+    private static void crawl() throws Exception {
         CrawlConfig config = new CrawlConfig();
 
         // Set the folder where intermediate crawl data is stored (e.g. list of urls that are extracted from previously
@@ -71,7 +102,7 @@ public class Labo1CrawlController {
         AtomicInteger numSeenImages = new AtomicInteger();
 
         // The factory which creates instances of crawlers.
-        CrawlController.WebCrawlerFactory<Labo1Crawler> factory = () -> new Labo1Crawler(numSeenImages);
+        CrawlController.WebCrawlerFactory<Labo1Crawler> factory = () -> new Labo1Crawler(numSeenImages, true);
 
         // Start the crawl. This is a blocking operation, meaning that your code
         // will reach the line after this only when crawling is finished.
