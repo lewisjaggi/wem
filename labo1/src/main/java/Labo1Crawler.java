@@ -167,7 +167,7 @@ public class Labo1Crawler extends WebCrawler {
         doc.addField("notes", gson.toJson(notes.toString()));
 
         //get date
-        Element date = jHtml.select("span.date").first();
+        Element date = jHtml.getElementsByClass("date").first();
         doc.addField("date", date.text());
 
 
