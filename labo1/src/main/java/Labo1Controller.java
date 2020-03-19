@@ -23,8 +23,23 @@ public class Labo1Controller {
                     break;
                 case "crawl2":
                     crawl(2);
-                case "search":
-                    querying();
+                    break;
+                case "searchTitle":
+                    String title = "";
+                    for (int i = 1; i < args.length; ++i) {
+                        title += args[i] + " ";
+                    }
+                    querying("title", title);
+                    break;
+                case "searchRealisator":
+                    String realisator = "";
+                    for (int i = 1; i < args.length; ++i) {
+                        realisator += args[i] + " ";
+                    }
+                    querying("realisateur", realisator);
+                    break;
+                default:
+                    break;
 
             }
         }catch (Exception e){
@@ -33,19 +48,11 @@ public class Labo1Controller {
 
     }
 
-    private static void querying() throws Exception {
+    private static void querying(String field, String text) throws Exception {
         AtomicInteger numSeenImages = new AtomicInteger();
         Labo1Crawler labo1Crawler = new Labo1Crawler(numSeenImages);
 
-        ArrayList<String> titles = new ArrayList<String>();
-        titles.add("RADIOACTIVE");
-        titles.add("La jetée");
-
-        ArrayList<String> realisateurs = new ArrayList<String>();
-        realisateurs.add("Chris Marker");
-        realisateurs.add("Jean Cocteau");
-
-        SolrDocumentList results = labo1Crawler.query(titles, realisateurs);
+        SolrDocumentList results = labo1Crawler.query(field, text);
         if (results != null) {
             String filename = LocalDateTime.now().toString();
             File myObj = new File(filename);

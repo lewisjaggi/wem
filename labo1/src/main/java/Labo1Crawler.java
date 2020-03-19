@@ -205,20 +205,10 @@ public class Labo1Crawler extends WebCrawler {
         client.commit(CORE_NAME2);
     }
 
-    public SolrDocumentList query(ArrayList<String> titles, ArrayList<String> realisateurs) {
+    public SolrDocumentList query(String field, String text) {
         try {
-            String lstTitles = "";
-            for(String title: titles) {
-                lstTitles += "title:" + title + " OR ";
-            }
-            String lstRealisateurs = "";
-            for(String realisateur: realisateurs) {
-                lstRealisateurs += "realisateur:" + realisateur + " OR ";
-            }
-            lstRealisateurs = lstRealisateurs.substring(0, lstRealisateurs.length() - 5);
-
             final Map<String, String> queryParamMap = new HashMap<String, String>();
-            queryParamMap.put("q", lstTitles + lstRealisateurs);
+            queryParamMap.put("q", field + ":" + text);
             queryParamMap.put("fl", "id, title, realisateur, synopsis, score");
             queryParamMap.put("sort","score DESC");
             final QueryResponse response;
