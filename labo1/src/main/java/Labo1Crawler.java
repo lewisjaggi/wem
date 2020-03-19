@@ -1,5 +1,7 @@
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
@@ -23,19 +25,20 @@ import org.jsoup.select.Elements;
 
 public class Labo1Crawler extends WebCrawler {
 
-    private static final String  CORE_NAME1 = "wemlabo1";
-    private static final String  CORE_NAME2 = "wemlabo2";
+    private static final String CORE_NAME1 = "wemlabo1";
+    private static final String CORE_NAME2 = "wemlabo2";
     private static final Pattern IMAGE_EXTENSIONS = Pattern.compile(".*\\.(bmp|gif|jpg|png)$");
 
     private AtomicInteger numSeenImages;
     private final SolrClient client = getSolrClient();
     private final Gson gson = new Gson();
+
     /**
      * Creates a new crawler instance.
      *
      * @param numSeenImages This is just an example to demonstrate how you can pass objects to crawlers. In this
-     * example, we pass an AtomicInteger to all crawlers and they increment it whenever they see a url which points
-     * to an image.
+     *                      example, we pass an AtomicInteger to all crawlers and they increment it whenever they see a url which points
+     *                      to an image.
      */
     public Labo1Crawler(AtomicInteger numSeenImages) throws IOException, SolrServerException {
 
@@ -90,7 +93,7 @@ public class Labo1Crawler extends WebCrawler {
             Set<WebURL> links = htmlParseData.getOutgoingUrls();
 
 
-            indexing1(page);
+            //indexing1(page);
             indexing2(docId, url, domain, subDomain, path, parentUrl, anchor, text, html, links);
 
             /*logger.debug("Text length: {}", text.length());
@@ -144,19 +147,55 @@ public class Labo1Crawler extends WebCrawler {
         doc.addField("html", html);
         doc.addField("links", links);
 
+        //get title
         Document jHtml = Jsoup.parse(html);
         Element title = jHtml.select("div.titlebar-title").first();
         doc.addField("title", title.text());
 
-        Elements htmlnotes = jHtml.select("div.rating-holder");
+        //get notes
+        Element htmlnotes = jHtml.getElementsByClass("rating-holder").first();
         HashMap<String, String> notes = new HashMap<>();
-        for (Element htmlnote : htmlnotes) {
-            notes.put(htmlnote.select("a.rating-title").text(), htmlnote.select("span.stareval-note").text());
+
+        for (Element htmlnote : htmlnotes.children()) {
+            notes.put(htmlnote.getElementsByClass("rating-title").first().text(), htmlnote.getElementsByClass("stareval-note").first().text());
         }
         doc.addField("notes", gson.toJson(notes.toString()));
 
-        logger.debug("Notes:");
-        logger.debug(gson.toJson(notes.toString()));
+        for (Element htmlnote : htmlnotes.children()) {
+            notes.put(htmlnote.getElementsByClass("rating-title").first().text(), htmlnote.getElementsByClass("stareval-note").first().text());
+        }
+        doc.addField("notes", gson.toJson(notes.toString()));
+
+        //get date
+        Element date = jHtml.select("span.date").first();
+        doc.addField("date", date.text());
+
+
+        //get real
+        Elements real = jHtml.select("meta");
+        for (Element e : real) {
+            if (e.attr("property").equals("video:director")) {
+               doc.addField("realisateur", e.attr("content"));
+            }
+
+        }
+
+        //get actors
+        List listActors = new ArrayList<String>();
+        Elements actors = jHtml.getElementsByClass("meta-body-actor").first().children();
+        for (Element e : actors) {
+            if (!e.className().equals( "ligth")) {
+               listActors.add(e.text());
+            }
+
+        }
+
+        doc.addField("actors", gson.toJson(listActors.toString()));
+
+        //get synopsis
+        Element syn = jHtml.getElementsByClass("content-txt").first();
+        doc.addField("synopsis", syn.text());
+
 
         try {
             client.add(CORE_NAME2, doc);
@@ -167,7 +206,7 @@ public class Labo1Crawler extends WebCrawler {
         }
     }
 
-     private void clear() throws IOException, SolrServerException {
+    private void clear() throws IOException, SolrServerException {
         client.deleteByQuery(CORE_NAME1, "*");
         client.commit(CORE_NAME1);
         client.deleteByQuery(CORE_NAME2, "*");
