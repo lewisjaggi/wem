@@ -1,8 +1,10 @@
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
 
+import com.google.gson.Gson;
 import org.apache.http.Header;
 
 import edu.uci.ics.crawler4j.crawler.Page;
@@ -16,17 +18,18 @@ import org.apache.solr.common.SolrInputDocument;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 
 
 public class Labo1Crawler extends WebCrawler {
 
     private static final String  CORE_NAME1 = "wemlabo1";
     private static final String  CORE_NAME2 = "wemlabo2";
-    private static final String  CORE_NAME3 = "wemlabo3";
     private static final Pattern IMAGE_EXTENSIONS = Pattern.compile(".*\\.(bmp|gif|jpg|png)$");
 
     private AtomicInteger numSeenImages;
-    final SolrClient client = getSolrClient();
+    private final SolrClient client = getSolrClient();
+    private final Gson gson = new Gson();
     /**
      * Creates a new crawler instance.
      *
@@ -34,8 +37,10 @@ public class Labo1Crawler extends WebCrawler {
      * example, we pass an AtomicInteger to all crawlers and they increment it whenever they see a url which points
      * to an image.
      */
-    public Labo1Crawler(AtomicInteger numSeenImages) {
+    public Labo1Crawler(AtomicInteger numSeenImages) throws IOException, SolrServerException {
+
         this.numSeenImages = numSeenImages;
+        this.clear();
     }
 
     /**
@@ -104,8 +109,8 @@ public class Labo1Crawler extends WebCrawler {
         logger.debug("=============");*/
     }
 
-    public HttpSolrClient getSolrClient() {
-        final String solrUrl = "http://localhost:8983/solr";
+    private HttpSolrClient getSolrClient() {
+        final String solrUrl = "http://localhost:8983/solr/";
         return new HttpSolrClient.Builder(solrUrl)
                 .withConnectionTimeout(10000)
                 .withSocketTimeout(60000)
@@ -140,8 +145,19 @@ public class Labo1Crawler extends WebCrawler {
         doc.addField("links", links);
 
         Document jHtml = Jsoup.parse(html);
-        Element masthead = jHtml.select("div.titlebar-title").first();
-        doc.addField("title", masthead.text());
+        Element title = jHtml.select("div.titlebar-title").first();
+        doc.addField("title", title.text());
+
+        Elements htmlnotes = jHtml.select("div.rating-holder");
+        HashMap<String, String> notes = new HashMap<>();
+        for (Element htmlnote : htmlnotes) {
+            notes.put(htmlnote.select("a.rating-title").text(), htmlnote.select("span.stareval-note").text());
+        }
+        doc.addField("notes", gson.toJson(notes.toString()));
+
+        logger.debug("Notes:");
+        logger.debug(gson.toJson(notes.toString()));
+
         try {
             client.add(CORE_NAME2, doc);
             // Indexed documents must be committed
@@ -149,5 +165,12 @@ public class Labo1Crawler extends WebCrawler {
         } catch (SolrServerException | IOException e) {
             e.printStackTrace();
         }
+    }
+
+     private void clear() throws IOException, SolrServerException {
+        client.deleteByQuery(CORE_NAME1, "*");
+        client.commit(CORE_NAME1);
+        client.deleteByQuery(CORE_NAME2, "*");
+        client.commit(CORE_NAME2);
     }
 }
