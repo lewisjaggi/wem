@@ -13,11 +13,24 @@ import edu.uci.ics.crawler4j.robotstxt.RobotstxtServer;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrDocumentList;
 
-public class Labo1CrawlController {
+public class Labo1Controller {
 
     public static void main(String[] args) throws Exception {
-        //crawl();
-        querying();
+        try{
+            switch (args[0]){
+                case "crawl1":
+                    crawl(1);
+                    break;
+                case "crawl2":
+                    crawl(2);
+                case "search":
+                    querying();
+
+            }
+        }catch (Exception e){
+            System.out.println("erreur");
+        }
+
     }
 
     private static void querying() throws Exception {
@@ -49,7 +62,7 @@ public class Labo1CrawlController {
         }
     }
 
-    private static void crawl() throws Exception {
+    private static void crawl(int type) throws Exception {
         CrawlConfig config = new CrawlConfig();
 
         // Set the folder where intermediate crawl data is stored (e.g. list of urls that are extracted from previously
@@ -112,7 +125,7 @@ public class Labo1CrawlController {
         AtomicInteger numSeenImages = new AtomicInteger();
 
         // The factory which creates instances of crawlers.
-        CrawlController.WebCrawlerFactory<Labo1Crawler> factory = () -> new Labo1Crawler(numSeenImages, true);
+        CrawlController.WebCrawlerFactory<Labo1Crawler> factory = () -> new Labo1Crawler(numSeenImages, true,type);
 
         // Start the crawl. This is a blocking operation, meaning that your code
         // will reach the line after this only when crawling is finished.

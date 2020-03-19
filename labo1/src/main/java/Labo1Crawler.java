@@ -33,6 +33,7 @@ public class Labo1Crawler extends WebCrawler {
     private AtomicInteger numSeenImages;
     private final SolrClient client = getSolrClient();
     private final Gson gson = new Gson();
+    private int type;
 
     /**
      * Creates a new crawler instance.
@@ -41,8 +42,9 @@ public class Labo1Crawler extends WebCrawler {
      *                      example, we pass an AtomicInteger to all crawlers and they increment it whenever they see a url which points
      *                      to an image.
      */
-    public Labo1Crawler(AtomicInteger numSeenImages, Boolean clear) throws IOException, SolrServerException {
+    public Labo1Crawler(AtomicInteger numSeenImages, Boolean clear, int type) throws IOException, SolrServerException {
 
+        this.type = type;
         this.numSeenImages = numSeenImages;
         if (clear) {
             this.clear();
@@ -51,7 +53,7 @@ public class Labo1Crawler extends WebCrawler {
 
     public Labo1Crawler(AtomicInteger numSeenImages) throws IOException, SolrServerException {
 
-        this(numSeenImages, false);
+        this(numSeenImages, false,1);
 
     }
 
@@ -94,8 +96,17 @@ public class Labo1Crawler extends WebCrawler {
             Set<WebURL> links = htmlParseData.getOutgoingUrls();
 
 
-            //indexing1(page);
-            indexing2(docId, url, domain, subDomain, path, parentUrl, anchor, text, html, links);
+            switch (type){
+                case 1:
+                    indexing1(page);
+                    break;
+                case 2:
+                    indexing2(docId, url, domain, subDomain, path, parentUrl, anchor, text, html, links);
+                    break;
+                default: System.out.println("Wrong crawler");
+            }
+
+
         }
     }
 
