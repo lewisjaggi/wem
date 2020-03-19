@@ -1,6 +1,8 @@
 import java.io.File;
 import java.io.FileWriter;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import edu.uci.ics.crawler4j.crawler.CrawlConfig;
@@ -22,7 +24,15 @@ public class Labo1CrawlController {
         AtomicInteger numSeenImages = new AtomicInteger();
         Labo1Crawler labo1Crawler = new Labo1Crawler(numSeenImages);
 
-        SolrDocumentList results = labo1Crawler.query("RADIOACTIVE", "Marjane Satrapi");
+        ArrayList<String> titles = new ArrayList<String>();
+        titles.add("RADIOACTIVE");
+        titles.add("La jetée");
+
+        ArrayList<String> realisateurs = new ArrayList<String>();
+        realisateurs.add("Chris Marker");
+        realisateurs.add("Jean Cocteau");
+
+        SolrDocumentList results = labo1Crawler.query(titles, realisateurs);
         if (results != null) {
             String filename = LocalDateTime.now().toString();
             File myObj = new File(filename);

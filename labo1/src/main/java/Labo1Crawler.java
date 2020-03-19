@@ -194,14 +194,22 @@ public class Labo1Crawler extends WebCrawler {
         client.commit(CORE_NAME2);
     }
 
-    public SolrDocumentList query(String title, String realisateur) {
+    public SolrDocumentList query(ArrayList<String> titles, ArrayList<String> realisateurs) {
         try {
-            final Map<String, String> queryParamMap = new HashMap<String, String>();
-            queryParamMap.put("q", "*:*");
-            queryParamMap.put("fq", "title:" + title);
-            queryParamMap.put("fq", "realisateur:" + realisateur);
-            queryParamMap.put("fl", "id, title, realisateur, synopsis, score");
+            String lstTitles = "";
+            for(String title: titles) {
+                lstTitles += "title:" + title + " OR ";
+            }
+            String lstRealisateurs = "";
+            for(String realisateur: realisateurs) {
+                lstRealisateurs += "realisateur:" + realisateur + " OR ";
+            }
+            lstRealisateurs = lstRealisateurs.substring(0, lstRealisateurs.length() - 5);
 
+            final Map<String, String> queryParamMap = new HashMap<String, String>();
+            queryParamMap.put("q", lstTitles + lstRealisateurs);
+            queryParamMap.put("fl", "id, title, realisateur, synopsis, score");
+            queryParamMap.put("sort","score DESC");
             final QueryResponse response;
             MapSolrParams queryParams = new MapSolrParams(queryParamMap);
 
