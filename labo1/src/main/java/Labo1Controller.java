@@ -1,3 +1,8 @@
+import java.io.File;
+import java.io.FileWriter;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import edu.uci.ics.crawler4j.crawler.CrawlConfig;
@@ -5,10 +10,66 @@ import edu.uci.ics.crawler4j.crawler.CrawlController;
 import edu.uci.ics.crawler4j.fetcher.PageFetcher;
 import edu.uci.ics.crawler4j.robotstxt.RobotstxtConfig;
 import edu.uci.ics.crawler4j.robotstxt.RobotstxtServer;
+import org.apache.solr.common.SolrDocument;
+import org.apache.solr.common.SolrDocumentList;
 
-public class Labo1CrawlController {
+public class Labo1Controller {
 
     public static void main(String[] args) throws Exception {
+        try{
+            switch (args[0]){
+                case "crawl1":
+                    crawl(1);
+                    break;
+                case "crawl2":
+                    crawl(2);
+                    break;
+                case "searchTitle":
+                    String title = "";
+                    for (int i = 1; i < args.length; ++i) {
+                        title += args[i] + " ";
+                    }
+                    querying("title", title);
+                    break;
+                case "searchRealisator":
+                    String realisator = "";
+                    for (int i = 1; i < args.length; ++i) {
+                        realisator += args[i] + " ";
+                    }
+                    querying("realisateur", realisator);
+                    break;
+                default:
+                    break;
+
+            }
+        }catch (Exception e){
+            System.out.println("erreur");
+        }
+
+    }
+
+    private static void querying(String field, String text) throws Exception {
+        AtomicInteger numSeenImages = new AtomicInteger();
+        Labo1Crawler labo1Crawler = new Labo1Crawler(numSeenImages);
+
+        SolrDocumentList results = labo1Crawler.query(field, text);
+        if (results != null) {
+            String filename = LocalDateTime.now().toString();
+            File myObj = new File(filename);
+            if (myObj.createNewFile()) {
+                FileWriter myWriter = new FileWriter(filename);
+                for (SolrDocument result : results
+                ) {
+                    myWriter.write(result.toString());
+
+                    myWriter.write("\n\n");
+                }
+                myWriter.close();
+            }
+        }
+    }
+
+    private static void crawl(int type) throws Exception {
         CrawlConfig config = new CrawlConfig();
 
         // Set the folder where intermediate crawl data is stored (e.g. list of urls that are extracted from previously
@@ -71,7 +132,7 @@ public class Labo1CrawlController {
         AtomicInteger numSeenImages = new AtomicInteger();
 
         // The factory which creates instances of crawlers.
-        CrawlController.WebCrawlerFactory<Labo1Crawler> factory = () -> new Labo1Crawler(numSeenImages);
+        CrawlController.WebCrawlerFactory<Labo1Crawler> factory = () -> new Labo1Crawler(numSeenImages, true,type);
 
         // Start the crawl. This is a blocking operation, meaning that your code
         // will reach the line after this only when crawling is finished.

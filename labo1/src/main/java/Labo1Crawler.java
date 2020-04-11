@@ -1,8 +1,9 @@
 import java.io.IOException;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
 
+import com.google.gson.Gson;
 import org.apache.http.Header;
 
 import edu.uci.ics.crawler4j.crawler.Page;
@@ -12,30 +13,48 @@ import edu.uci.ics.crawler4j.url.WebURL;
 import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.impl.HttpSolrClient;
+import org.apache.solr.client.solrj.response.QueryResponse;
+import org.apache.solr.common.SolrDocument;
+import org.apache.solr.common.SolrDocumentList;
 import org.apache.solr.common.SolrInputDocument;
+import org.apache.solr.common.params.MapSolrParams;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 
 
 public class Labo1Crawler extends WebCrawler {
 
-    private static final String  CORE_NAME1 = "wemlabo1";
-    private static final String  CORE_NAME2 = "wemlabo2";
-    private static final String  CORE_NAME3 = "wemlabo3";
+    private static final String CORE_NAME1 = "wemlabo1";
+    private static final String CORE_NAME2 = "wemlabo2";
     private static final Pattern IMAGE_EXTENSIONS = Pattern.compile(".*\\.(bmp|gif|jpg|png)$");
 
     private AtomicInteger numSeenImages;
-    final SolrClient client = getSolrClient();
+    private final SolrClient client = getSolrClient();
+    private final Gson gson = new Gson();
+    private int type;
+
     /**
      * Creates a new crawler instance.
      *
      * @param numSeenImages This is just an example to demonstrate how you can pass objects to crawlers. In this
-     * example, we pass an AtomicInteger to all crawlers and they increment it whenever they see a url which points
-     * to an image.
+     *                      example, we pass an AtomicInteger to all crawlers and they increment it whenever they see a url which points
+     *                      to an image.
      */
-    public Labo1Crawler(AtomicInteger numSeenImages) {
+    public Labo1Crawler(AtomicInteger numSeenImages, Boolean clear, int type) throws IOException, SolrServerException {
+
+        this.type = type;
         this.numSeenImages = numSeenImages;
+        if (clear) {
+            this.clear();
+        }
+    }
+
+    public Labo1Crawler(AtomicInteger numSeenImages) throws IOException, SolrServerException {
+
+        this(numSeenImages, false,1);
+
     }
 
     /**
@@ -70,14 +89,6 @@ public class Labo1Crawler extends WebCrawler {
         String parentUrl = page.getWebURL().getParentUrl();
         String anchor = page.getWebURL().getAnchor();
 
-        /*logger.debug("DocId: {}", docId);
-        logger.info("URL: {}", url);
-        logger.debug("Domain: '{}'", domain);
-        logger.debug("Sub-domain: '{}'", subDomain);
-        logger.debug("Path: '{}'", path);
-        logger.debug("Parent page: {}", parentUrl);
-        logger.debug("Anchor text: {}", anchor);*/
-
         if (page.getParseData() instanceof HtmlParseData) {
             HtmlParseData htmlParseData = (HtmlParseData) page.getParseData();
             String text = htmlParseData.getText();
@@ -85,27 +96,22 @@ public class Labo1Crawler extends WebCrawler {
             Set<WebURL> links = htmlParseData.getOutgoingUrls();
 
 
-            indexing1(page);
-            indexing2(docId, url, domain, subDomain, path, parentUrl, anchor, text, html, links);
-
-            /*logger.debug("Text length: {}", text.length());
-            logger.debug("Html length: {}", html.length());
-            logger.debug("Number of outgoing links: {}", links.size());*/
-        }
-
-        /*Header[] responseHeaders = page.getFetchResponseHeaders();
-        if (responseHeaders != null) {
-            logger.debug("Response headers:");
-            for (Header header : responseHeaders) {
-                logger.debug("\t{}: {}", header.getName(), header.getValue());
+            switch (type){
+                case 1:
+                    indexing1(page);
+                    break;
+                case 2:
+                    indexing2(docId, url, domain, subDomain, path, parentUrl, anchor, text, html, links);
+                    break;
+                default: System.out.println("Wrong crawler");
             }
-        }
 
-        logger.debug("=============");*/
+
+        }
     }
 
-    public HttpSolrClient getSolrClient() {
-        final String solrUrl = "http://localhost:8983/solr";
+    private HttpSolrClient getSolrClient() {
+        final String solrUrl = "http://localhost:8983/solr/";
         return new HttpSolrClient.Builder(solrUrl)
                 .withConnectionTimeout(10000)
                 .withSocketTimeout(60000)
@@ -139,9 +145,50 @@ public class Labo1Crawler extends WebCrawler {
         doc.addField("html", html);
         doc.addField("links", links);
 
+        //get title
         Document jHtml = Jsoup.parse(html);
-        Element masthead = jHtml.select("div.titlebar-title").first();
-        doc.addField("title", masthead.text());
+        Element title = jHtml.select("div.titlebar-title").first();
+        doc.addField("title", title.text());
+
+        //get notes
+        Element htmlnotes = jHtml.getElementsByClass("rating-holder").first();
+        HashMap<String, String> notes = new HashMap<>();
+
+        for (Element htmlnote : htmlnotes.children()) {
+            notes.put(htmlnote.getElementsByClass("rating-title").first().text(), htmlnote.getElementsByClass("stareval-note").first().text());
+        }
+        doc.addField("notes", gson.toJson(notes.toString()));
+
+        //get date
+        Element date = jHtml.getElementsByClass("date").first();
+        doc.addField("date", date.text());
+
+        //get real
+        Elements real = jHtml.select("meta");
+        for (Element e : real) {
+            if (e.attr("property").equals("video:director")) {
+               doc.addField("realisateur", e.attr("content"));
+            }
+
+        }
+
+        //get actors
+        List listActors = new ArrayList<String>();
+        Elements actors = jHtml.getElementsByClass("meta-body-actor").first().children();
+        for (Element e : actors) {
+            if (!e.className().equals( "ligth")) {
+               listActors.add(e.text());
+            }
+
+        }
+
+        doc.addField("actors", gson.toJson(listActors.toString()));
+
+        //get synopsis
+        Element syn = jHtml.getElementsByClass("content-txt").first();
+        doc.addField("synopsis", syn.text());
+
+
         try {
             client.add(CORE_NAME2, doc);
             // Indexed documents must be committed
@@ -149,5 +196,32 @@ public class Labo1Crawler extends WebCrawler {
         } catch (SolrServerException | IOException e) {
             e.printStackTrace();
         }
+    }
+
+    private void clear() throws IOException, SolrServerException {
+        client.deleteByQuery(CORE_NAME1, "*");
+        client.commit(CORE_NAME1);
+        client.deleteByQuery(CORE_NAME2, "*");
+        client.commit(CORE_NAME2);
+    }
+
+    public SolrDocumentList query(String field, String text) {
+        try {
+            final Map<String, String> queryParamMap = new HashMap<String, String>();
+            queryParamMap.put("q", field + ":" + text);
+            queryParamMap.put("fl", "id, title, realisateur, synopsis, score");
+            queryParamMap.put("sort","score DESC");
+            final QueryResponse response;
+            MapSolrParams queryParams = new MapSolrParams(queryParamMap);
+
+            response = client.query(CORE_NAME2, queryParams);
+
+            return response.getResults();
+        } catch (SolrServerException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 }
