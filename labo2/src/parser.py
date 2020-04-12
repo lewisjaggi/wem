@@ -46,5 +46,5 @@ for row in interestingData:
     cn = np.where(header_out == productName)[0]
     data_out[rn[0], cn[0]] = True
 
-np.savetxt("foo.csv", data_out, delimiter=";", fmt='%s')
+np.savetxt("ex3_data_out.csv", data_out, delimiter="|", fmt='%s')
 print("END")
