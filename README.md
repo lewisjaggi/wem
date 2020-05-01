@@ -92,10 +92,8 @@ Que les données ne soient pas à jour.
 SI on veut utiliser Steam Web API, Il faut faire attention au niveau de confidentialité des comptes Steam. 
 
 ### Planification des prochaines étapes du projet 
-#### Diagramme de Gantt 
-
 #### WorkPackage 
-
- 
-
+![WorkPAckage](documentation/WorkPackage.jpg)
+#### Diagramme de Gantt 
+![Diagramme de Gantt](documentation/DiagrammedeGantt.jpg)
  
