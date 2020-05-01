@@ -61,6 +61,8 @@ Pour la Steam Web API, les réponses retournées des requêtes sont déjà extra
 ## Etat de l'art
 
 ## Fonctionnalités
+L'utilisateur peut faire une sélection de filtres pour sa recherche de proposition de jeu.
+Une fois la recherche effectuée, il peut accéder aux pages du store de Steam des jeux qui l'intéresse.
 
 ## Conception / Cas d'utilisation / Architecture
 ### Architecture globale / technologies envisagées 
