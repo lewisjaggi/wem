@@ -36,8 +36,8 @@ Steam Web API est libre d’utilisation.
 #### Description (attributs, quantité) 
 Voici la structure des données qui nous est fournis, elle comporte 20 colonnes et plus de 40'000 entrées (jeux) : 
 
-|:---:|:–––:|
 |Colonne|Description|
+|:---:|:–––:|
 |url|Url du jeu|
 |types|Type de l’article|
 |name|Nom du jeu|
