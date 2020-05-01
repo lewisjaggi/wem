@@ -1,16 +1,6 @@
 from flask import Flask
-from flask.ext.mongoalchemy import MongoAlchemy
+from flask_pymongo import PyMongo
 
 app = Flask(__name__)
-app.config['MONGOALCHEMY_DATABASE'] = 'library'
-db = MongoAlchemy(app)
-
-class Game(db.Document):
-    id
-    name = bd.StringField()
-    type
-    url
-    tags
-    languages
-
-class
+app.config["MONGO_URI"] = "mongodb://localhost:27017/myDatabase"
+mongo = PyMongo(app)
