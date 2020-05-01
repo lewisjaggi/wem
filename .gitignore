@@ -163,3 +163,4 @@ htmlcov/
 .coverage
 .coverage.*
 *,cover
+__pycache__/
