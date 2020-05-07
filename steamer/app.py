@@ -22,7 +22,11 @@ def get_games():
 
     return Response(games, mimetype="application/json", status=200)
 
+@app.route('/games/<name>')
+def get_game(name):
+    game = [game for game in Game.objects() if game.name == name][0].to_json()
 
+    return Response(game, mimetype="application/json", status=200)
 
 @app.route('/results', methods=['POST'])
 def results():
