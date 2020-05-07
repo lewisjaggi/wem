@@ -77,7 +77,7 @@ Par la suite différente, Steam Web API peut être utilisé afin d’améliorer 
 
 ### Planification des prochaines étapes du projet 
 #### WorkPackage 
-![WorkPAckage](documentation/WorkPackage.jpg)
+![WorkPackage](documentation/WorkPackage.jpg)
 #### Diagramme de Gantt 
 ![Diagramme de Gantt](documentation/DiagrammedeGantt.jpg)
  
