@@ -1,3 +1,4 @@
+import json
 import requests
 import re
 from steamer.database.db import Game
@@ -12,11 +13,8 @@ def cleanhtml(raw_html):
 def get_game_details_by_id(game_id):
     game = Game.objects(steam_id=game_id)
     if len(game) == 0:
-        game = get_api_game_details_by_id(game_id)
-        return '{"toto": "toto"}'
-    else:
-        game = [get_api_game_details_by_id(game_id)]
-        return game[0].to_json()
+        return json.dumps(get_api_game_details_by_id(game_id))
+    return game[0].to_json()
 
 
 def get_api_game_details_by_id(game_id):
@@ -27,10 +25,10 @@ def get_api_game_details_by_id(game_id):
     r = requests.get('https://store.steampowered.com/api/appdetails', params=payload)
     r_steam_spy = requests.get('https://steamspy.com/api.php', params={'request': 'appdetails', 'appid': game_id})
 
-    if r.status_code != 200 or r_steam_spy.status_code != 200:
+    if r.status_code != 200 or r_steam_spy.status_code != 200 or r.json().get(game_id).get('success') != True:
         return {
-            'status_code': r.status_code,
-            'error': r.text
+            'status_code': 400,
+            'error': 'Bad Request'
         }
 
     steam_game = r.json().get(game_id).get('data')
