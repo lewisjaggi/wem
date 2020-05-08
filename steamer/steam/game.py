@@ -15,7 +15,9 @@ def clean_html(raw_html):
 def get_game_details_by_id(game_id):
     game = Game.objects(steam_id=game_id)
     if len(game) == 0:
-        return json.dumps(get_api_game_details_by_id(game_id))
+        game = get_api_game_details_by_id(game_id)
+        game.save()
+        return game.to_json()
     return game[0].to_json()
 
 
@@ -36,15 +38,18 @@ def get_api_game_details_by_id(game_id):
     steam_game = r.json().get(game_id).get('data')
     steam_spy = r_steam_spy.json()
 
+    total_reviews = steam_spy.get('positive') + steam_spy.get('negative')
+    percentage_positive_reviews = '0%' if total_reviews == 0 else str(steam_spy.get('positive') / total_reviews) + '%'
+
     return Game(
         steam_id=steam_game.get('steam_appid'),
         url='https://store.steampowered.com/app/' + str(steam_game.get('steam_appid')) + '/',
         name=steam_game.get('name'),
         desc_snippet=steam_game.get('short_description'),
-        reviews={'count': 1234567890, 'percentage': '1234567890%'},
+        reviews="{'count': " + str(total_reviews) + ", 'percentage': " + percentage_positive_reviews + "}",
         release_date=steam_game.get('release_date').get('date'),
         developer=steam_game.get('developers')[0],
-        popular_tags=steam_spy.get('tags').keys(),
+        popular_tags=steam_spy.get('tags').keys() if len(steam_spy.get('tags')) > 0 else [],
         game_details=map(lambda x: x.get('description'), steam_game.get('categories')),
         languages=map(lambda x: x.strip(), steam_game.get('supported_languages').split(',')),
         genres=map(lambda x: x.get('description'), steam_game.get('genres')),
