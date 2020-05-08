@@ -19,7 +19,7 @@ def index():
     tags = Tag.objects()
     game_details = GameDetail.objects()
     developers = Developer.objects()
-    return render_template('index.html', genres=genres, tags=tags, game_details = game_details, developers= developers)
+    return render_template('index.html', genres=genres, tags=tags, game_details=game_details, developers=developers)
 
 
 @app.route('/games')
@@ -44,6 +44,7 @@ def results():
     # the code below is executed if the request method
     # was GET or the credentials were invalid
     return render_template('index.html', name=error)
+
 
 @app.route('/users/<steam_id>/games')
 def get_user(steam_id):
