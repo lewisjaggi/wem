@@ -10,12 +10,12 @@ def cleanhtml(raw_html):
 
 
 def get_game_details_by_id(game_id):
-    game = Game.objects(steam_id='app/'+game_id)
+    game = Game.objects(steam_id=game_id)
     if len(game) == 0:
         game = get_api_game_details_by_id(game_id)
         return '{"toto": "toto"}'
     else:
-        game = get_api_game_details_by_id(game_id)
+        game = [get_api_game_details_by_id(game_id)]
         return game[0].to_json()
 
 
@@ -36,15 +36,15 @@ def get_api_game_details_by_id(game_id):
     steam_game = r.json().get(game_id).get('data')
     steam_spy = r_steam_spy.json()
 
-    game = Game(
-        steam_id='app/' + str(steam_game.get('steam_appid')),
+    return Game(
+        steam_id=steam_game.get('steam_appid'),
         url='https://store.steampowered.com/app/' + str(steam_game.get('steam_appid')) + '/',
         name=steam_game.get('name'),
         desc_snippet=steam_game.get('short_description'),
-        # reviews=steam_game.get(''),
+        reviews={'count': 1234567890, 'percentage': '1234567890%'},
         release_date=steam_game.get('release_date').get('date'),
         developer=steam_game.get('developers')[0],
-        # popular_tags=steam_game.get(''),
+        popular_tags=steam_spy.get('tags').keys(),
         game_details=map(lambda x: x.get('description'), steam_game.get('categories')),
         languages=map(lambda x: x.strip(), steam_game.get('supported_languages').split(',')),
         genres=map(lambda x: x.get('description'), steam_game.get('genres')),
@@ -55,6 +55,3 @@ def get_api_game_details_by_id(game_id):
         original_price=steam_game.get('price_overview').get('final_formatted'),
         discount_price=''
     )
-    # game.save()
-
-    return [game]

@@ -25,7 +25,7 @@ class Config(object):
 
 
 class Game(db.Document):
-    steam_id = db.StringField(required=True, unique=True)
+    steam_id = db.IntField(required=True, unique=True)
     url = db.StringField(required=True, unique=True)
     name = db.StringField(required=True)
     desc_snippet = db.StringField()
@@ -86,7 +86,11 @@ def populate_db():
                 split_url = row[0].split('/')
                 if len(split_url) < 5:
                     continue
-                steam_id = split_url[3] + '/' + split_url[4]
+
+                if split_url[3] != 'app':
+                    continue
+
+                steam_id = split_url[4]
 
                 url = row[0] if row[0] != "NaN" else ""
 
