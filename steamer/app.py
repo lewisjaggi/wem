@@ -2,7 +2,9 @@
 # -*- coding: utf-8 -*-
 
 from flask import Flask, render_template, request, Response
-from database.db import initialize_db, Game, Genre, Tag, GameDetail, Developer
+from steamer.database.db import initialize_db, Game, Genre, Tag, GameDetail, Developer
+from steamer.steam.game import get_game_details_by_id
+from steamer.steam.user import get_games_by_user
 
 app = Flask(__name__)
 app.config['MONGODB_SETTINGS'] = {
@@ -42,3 +44,16 @@ def results():
     # the code below is executed if the request method
     # was GET or the credentials were invalid
     return render_template('index.html', name=error)
+
+@app.route('/users/<steam_id>/games')
+def get_user(steam_id):
+    user = get_games_by_user(steam_id)
+
+    return Response(user, mimetype="application/json", status=200)
+
+
+@app.route('/game/<game_id>')
+def get_game_by_id(game_id):
+    r = get_game_details_by_id(game_id)
+
+    return Response(r, mimetype="application/json", status=200)

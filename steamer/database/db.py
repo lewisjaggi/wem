@@ -68,7 +68,7 @@ def populate_db():
     connection.drop_database(db_config['db'])
     is_header = True
 
-    with open(str(pathlib.Path(__file__).parent.absolute()) + '/steam_games.csv', newline='') as csvfile:
+    with open(str(pathlib.Path(__file__).parent.absolute()) + '/steam_games.csv', newline='', encoding="utf8") as csvfile:
         reader = csv.reader(csvfile, delimiter=",")
 
         table_genres = []
@@ -134,6 +134,7 @@ def populate_db():
                     game_details.remove("NaN")
 
                 languages = row[11].split(',')
+
                 if "NaN" in languages:
                     languages.remove("NaN")
 
