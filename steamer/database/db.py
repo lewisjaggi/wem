@@ -34,7 +34,7 @@ class Game(db.Document):
     popular_tags = db.ListField(required=True)
     game_details = db.ListField(required=True)
     languages = db.ListField(required=True)
-    genre = db.ListField(required=True)
+    genres = db.ListField(required=True)
     game_description = db.StringField(required=True)
     mature_content = db.StringField(required=True)
     minimum_requirements = db.StringField(required=True)
@@ -52,7 +52,7 @@ def populate_db():
     connection.drop_database(db_config['db'])
     is_header = True
 
-    with open(str(pathlib.Path(__file__).parent.absolute()) + '/steam_games.csv', newline='') as csvfile:
+    with open(str(pathlib.Path(__file__).parent.absolute()) + '/steam_games.csv', newline='', encoding="utf8") as csvfile:
         reader = csv.reader(csvfile, delimiter=",")
         for row in reader:
             if is_header:
@@ -98,7 +98,7 @@ def populate_db():
                 game_details = row[10].split(',')
                 languages = row[11].split(',')
                 achievements = row[12]
-                genre = row[13].split(',')
+                genres = row[13].split(',')
                 game_description = row[14]
                 mature_content = row[15]
 
@@ -135,7 +135,7 @@ def populate_db():
                     popular_tags=popular_tags,
                     game_details=game_details,
                     languages=languages,
-                    genre=genre,
+                    genres=genres,
                     game_description=game_description,
                     mature_content=mature_content,
                     minimum_requirements=json.dumps(minimum_requirements),
