@@ -31,7 +31,7 @@ def get_games():
 
 @app.route('/games/<name>')
 def get_game(name):
-    game = [game for game in Game.objects() if game.name == name][0].to_json()
+    game = [game for game in Game.objects() if game.id == name]
 
     return Response(game, mimetype="application/json", status=200)
 
