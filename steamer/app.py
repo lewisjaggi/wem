@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from flask import Flask, render_template, request, Response
-from steamer.database.db import initialize_db, Game
+from steamer.database.db import initialize_db, Game, Genre, Tag, GameDetail, Developer
 from steamer.steam.game import get_game_details_by_id
 from steamer.steam.user import get_games_by_user
 
@@ -15,7 +15,11 @@ initialize_db(app)
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    genres = Genre.objects()
+    tags = Tag.objects()
+    game_details = GameDetail.objects()
+    developers = Developer.objects()
+    return render_template('index.html', genres=genres, tags=tags, game_details=game_details, developers=developers)
 
 
 @app.route('/games')
@@ -27,7 +31,7 @@ def get_games():
 
 @app.route('/games/<name>')
 def get_game(name):
-    game = [game for game in Game.objects() if game.name == name][0].to_json()
+    game = [game for game in Game.objects() if game.id == name]
 
     return Response(game, mimetype="application/json", status=200)
 

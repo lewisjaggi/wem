@@ -28,20 +28,36 @@ class Game(db.Document):
     steam_id = db.StringField(required=True, unique=True)
     url = db.StringField(required=True, unique=True)
     name = db.StringField(required=True)
-    desc_snippet = db.StringField(required=True)
+    desc_snippet = db.StringField()
     reviews = db.StringField()
     release_date = db.StringField()
-    developer = db.StringField(required=True)
-    popular_tags = db.ListField(required=True)
-    game_details = db.ListField(required=True)
-    languages = db.ListField(required=True)
-    genres = db.ListField(required=True)
-    game_description = db.StringField(required=True)
-    mature_content = db.StringField(required=True)
-    minimum_requirements = db.StringField(required=True)
-    recommended_requirements = db.StringField(required=True)
-    original_price = db.StringField(required=True)
-    discount_price = db.StringField(required=True)
+    developer = db.StringField()
+    popular_tags = db.ListField()
+    game_details = db.ListField()
+    languages = db.ListField()
+    genres = db.ListField()
+    game_description = db.StringField()
+    mature_content = db.StringField()
+    minimum_requirements = db.StringField()
+    recommended_requirements = db.StringField()
+    original_price = db.StringField()
+    discount_price = db.StringField()
+
+
+class Genre(db.Document):
+    name = db.StringField(required=True, unique=True)
+
+
+class Tag(db.Document):
+    name = db.StringField(required=True, unique=True)
+
+
+class GameDetail(db.Document):
+    name = db.StringField(required=True, unique=True)
+
+
+class Developer(db.Document):
+    name = db.StringField(required=True, unique=True)
 
 
 def populate_db():
@@ -56,6 +72,13 @@ def populate_db():
     with open(str(pathlib.Path(__file__).parent.absolute()) + '/steam_games.csv', newline='',
               encoding="utf8") as csvfile:
         reader = csv.reader(csvfile, delimiter=",")
+
+        table_genres = []
+        table_tags = []
+        table_games_details = []
+        table_languages = []
+        table_developers = []
+
         for row in reader:
             if is_header:
                 is_header = False
@@ -64,11 +87,17 @@ def populate_db():
                 if len(split_url) < 5:
                     continue
                 steam_id = split_url[3] + '/' + split_url[4]
-                url = row[0]
-                types = row[1]
-                name = row[2]
-                desc_snippet = row[3]
-                recent_reviews = row[4]
+
+                url = row[0] if row[0] != "NaN" else ""
+
+                types = row[1] if row[1] != "NaN" else ""
+
+                name = row[2] if row[2] != "NaN" else ""
+
+                desc_snippet = row[3] if row[3] != "NaN" else ""
+
+                recent_reviews = row[4] if row[4] != "NaN" else ""
+
                 all_reviews = row[5].split(',')
 
                 i_reviews = 0
@@ -98,15 +127,33 @@ def populate_db():
                            "desc": desc_reviews}
 
                 release_date = row[6] if row[6] != "NaN" else ""
-                developer = row[7]
-                publisher = row[8]
+
+                developer = row[7] if row[7] != "NaN" else ""
+
+                publisher = row[8] if row[8] != "NaN" else ""
+
                 popular_tags = row[9].split(',')
+                if "NaN" in popular_tags:
+                    popular_tags.remove("NaN")
+
                 game_details = row[10].split(',')
+                if "NaN" in game_details:
+                    game_details.remove("NaN")
+
                 languages = row[11].split(',')
-                achievements = row[12]
+
+                if "NaN" in languages:
+                    languages.remove("NaN")
+
+                achievements = row[12] if row[12] != "NaN" else ""
+
                 genres = row[13].split(',')
-                game_description = row[14]
-                mature_content = row[15]
+                if "NaN" in genres:
+                    genres.remove("NaN")
+
+                game_description = row[14] if row[14] != "NaN" else ""
+
+                mature_content = row[15][77:] if row[15] != "" else "" if row[15] != "NaN" else ""
 
                 minimum_requirements_data = row[16].split(",")
                 minimum_requirements = {}
@@ -128,8 +175,9 @@ def populate_db():
                         recommended_requirements[key] = value
                         i += 1
 
-                original_price = row[18]
-                discount_price = row[19]
+                original_price = row[18] if row[18] != "NaN" else ""
+
+                discount_price = row[19] if row[19] != "NaN" else ""
 
                 try:
                     Game(
@@ -153,6 +201,37 @@ def populate_db():
                     ).save()
                 except:
                     print("The id : " + steam_id + " is duplicated")
+
+                for genre in genres:
+                    if genre not in table_genres:
+                        table_genres.append(genre)
+
+                for tag in popular_tags:
+                    if tag not in table_tags:
+                        table_tags.append(tag)
+
+                for detail in game_details:
+                    if detail not in table_games_details:
+                        table_games_details.append(detail)
+
+                for language in languages:
+                    if language not in table_languages:
+                        table_languages.append(language)
+
+                if developer not in table_developers:
+                    table_developers.append(developer)
+
+        for genre in table_genres:
+            Genre(name=genre).save()
+
+        for tag in table_tags:
+            Tag(name=tag).save()
+
+        for detail in table_games_details:
+            GameDetail(name=detail).save()
+
+        for developer in table_developers:
+            Developer(name=developer).save()
 
 
 if __name__ == "__main__":
