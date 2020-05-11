@@ -27,6 +27,7 @@ with open(str(pathlib.Path(__file__).parent.absolute()) + '/steamer.csv', 'w', n
                 recommended_requirements[element] = ""
 
         csvwriter.writerow([
+            game.steam_id,
             game.url,
             game.name,
             game.desc_snippet,
