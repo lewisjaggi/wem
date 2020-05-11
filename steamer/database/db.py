@@ -25,6 +25,7 @@ class Config(object):
 
 
 class Game(db.Document):
+    steam_id = db.IntField(required=True, unique=True)
     url = db.StringField(required=True, unique=True)
     name = db.StringField(required=True)
     desc_snippet = db.StringField()
@@ -99,7 +100,8 @@ def populate_db():
     connection.drop_database(db_config['db'])
     is_header = True
 
-    with open(str(pathlib.Path(__file__).parent.absolute()) + '/steam_games.csv', newline='', encoding="utf8") as csvfile:
+    with open(str(pathlib.Path(__file__).parent.absolute()) + '/steam_games.csv', newline='',
+              encoding="utf8") as csvfile:
         reader = csv.reader(csvfile, delimiter=",")
 
         table_genres = []
@@ -112,6 +114,15 @@ def populate_db():
             if is_header:
                 is_header = False
             else:
+                split_url = row[0].split('/')
+                if len(split_url) < 5:
+                    continue
+
+                if split_url[3] != 'app':
+                    continue
+
+                steam_id = split_url[4]
+
                 url = row[0] if row[0] != "NaN" else ""
 
                 types = row[1] if row[1] != "NaN" else ""
@@ -187,25 +198,29 @@ def populate_db():
 
                 discount_price = row[19] if row[19] != "NaN" else ""
 
+                try:
+                    Game(
+                        steam_id=steam_id,
+                        url=url,
+                        name=name,
+                        desc_snippet=desc_snippet,
+                        reviews=json.dumps(reviews),
+                        release_date=release_date,
+                        developer=developer,
+                        popular_tags=popular_tags,
+                        game_details=game_details,
+                        languages=languages,
+                        genres=genres,
+                        game_description=game_description,
+                        mature_content=mature_content,
+                        minimum_requirements=json.dumps(minimum_requirements),
+                        recommended_requirements=json.dumps(recommended_requirements),
+                        original_price=original_price,
+                        discount_price=discount_price
+                    ).save()
+                except:
+                    print("The id : " + steam_id + " is duplicated")
 
-                Game(
-                    url=url,
-                    name=name,
-                    desc_snippet=desc_snippet,
-                    reviews=json.dumps(reviews),
-                    release_date=release_date,
-                    developer=developer,
-                    popular_tags=popular_tags,
-                    game_details=game_details,
-                    languages=languages,
-                    genres=genres,
-                    game_description=game_description,
-                    mature_content=mature_content,
-                    minimum_requirements=json.dumps(minimum_requirements),
-                    recommended_requirements=json.dumps(recommended_requirements),
-                    original_price=original_price,
-                    discount_price=discount_price
-                ).save()
 
                 for genre in genres:
                     if genre not in table_genres:
