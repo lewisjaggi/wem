@@ -59,9 +59,40 @@ class Developer(db.Document):
     name = db.StringField(required=True, unique=True)
 
 
-def populate_db():
+def connect_db():
     # Connect using MongoEngine
     # no Flask app created
+    db_config = Config.MONGODB_SETTINGS
+    connection = me.connect(**db_config)
+    me.connection.get_db()
+
+
+def format_requirement(data):
+    requirements_data = data
+    requirements = {}
+    labels = ['OS', 'Processor', 'Memory', 'Graphics', 'Storage', 'Additional Notes', 'DirectX', 'Sound Card',
+              'Network', 'Recommended', 'Minimum', 'Hard Drive']
+    key = ""
+    value = []
+    for i in range(1, len(requirements_data) - 1, 1):
+        if i != len(requirements_data) - 1:
+            if requirements_data[i][:-1] in labels:
+                if i != 1:
+                    requirements[key] = ", ".join(value) if len(value) else ""
+                    value = []
+                key = requirements_data[i][:-1]
+                key = key if key != 'Hard Drive' else 'Storage'
+                key = key if key != 'Sound' else 'Sound Card'
+            else:
+                if str(value) != "NaN":
+                    value.append(requirements_data[i])
+        else:
+            value.append(requirements_data[i])
+            requirements[key] = ", ".join(value) if len(value) else ""
+    return requirements
+
+
+def populate_db():
     db_config = Config.MONGODB_SETTINGS
     connection = me.connect(**db_config)
     me.connection.get_db()
@@ -114,10 +145,10 @@ def populate_db():
 
                 desc_reviews = all_reviews[i_reviews] if len(all_reviews) > i_reviews else ""
 
-                reviews = {"status": status_reviews,
-                           "count": number_reviews,
-                           "percentage": percentage_reviews,
-                           "desc": desc_reviews}
+                reviews = {"status": str(status_reviews) if str(status_reviews) != "NaN" else "",
+                           "count": str(number_reviews) if str(number_reviews) != "NaN" else "",
+                           "percentage": str(percentage_reviews) if str(percentage_reviews) != "NaN" else "",
+                           "desc": str(desc_reviews) if str(desc_reviews) != "NaN" else ""}
 
                 release_date = row[6] if row[6] != "NaN" else ""
 
@@ -148,29 +179,14 @@ def populate_db():
 
                 mature_content = row[15][77:] if row[15] != "" else "" if row[15] != "NaN" else ""
 
-                minimum_requirements_data = row[16].split(",")
-                minimum_requirements = {}
-                for i in range(0, len(minimum_requirements_data) - 2, 1):
-                    value = minimum_requirements_data[i+1]
+                minimum_requirements = format_requirement(row[16].split(","))
 
-                    if value[:-1] not in ['OS', 'Processor', 'Memory', 'Graphics', 'Storage', 'Additional Notes']:
-                        key = minimum_requirements_data[i][:-1]
-                        minimum_requirements[key] = value
-                        i += 1
-
-                recommended_requirements_data = row[17].split(",")
-                recommended_requirements = {}
-                for i in range(1, len(recommended_requirements_data) - 2, 1):
-                    value = recommended_requirements_data[i + 1]
-
-                    if value[:-1] not in ['OS', 'Processor', 'Memory', 'Graphics', 'Storage', 'Additional Notes']:
-                        key = recommended_requirements_data[i][:-1]
-                        recommended_requirements[key] = value
-                        i += 1
+                recommended_requirements = format_requirement(row[17].split(","))
 
                 original_price = row[18] if row[18] != "NaN" else ""
 
                 discount_price = row[19] if row[19] != "NaN" else ""
+
 
                 Game(
                     url=url,
