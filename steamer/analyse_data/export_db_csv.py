@@ -11,7 +11,7 @@ import json
 connect_db()
 
 with open(str(pathlib.Path(__file__).parent.absolute()) + '/steamer.csv', 'w', newline='') as csvfile:
-    csvwriter = csv.writer(csvfile, delimiter='|', quotechar='|', quoting=csv.QUOTE_MINIMAL)
+    csvwriter = csv.writer(csvfile, delimiter='|')
     for game in Game.objects():
         reviews = json.loads(game.reviews)
 
@@ -48,14 +48,23 @@ with open(str(pathlib.Path(__file__).parent.absolute()) + '/steamer.csv', 'w', n
             minimum_requirements["Memory"],
             minimum_requirements["Graphics"],
             minimum_requirements["Storage"],
-            minimum_requirements["Additional Notes"],
+            recommended_requirements["Additional Notes"],
+            minimum_requirements["DirectX"],
+            minimum_requirements["Sound Card"],
+            minimum_requirements["Network"],
+            minimum_requirements["Minimum"],
+            minimum_requirements["Recommended"],
             recommended_requirements["OS"],
             recommended_requirements["Processor"],
             recommended_requirements["Memory"],
             recommended_requirements["Graphics"],
             recommended_requirements["Storage"],
             recommended_requirements["Additional Notes"],
+            recommended_requirements["DirectX"],
+            recommended_requirements["Sound Card"],
+            recommended_requirements["Network"],
+            recommended_requirements["Minimum"],
+            recommended_requirements["Recommended"],
             game.original_price,
             game.discount_price
         ])
-

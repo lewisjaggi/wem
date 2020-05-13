@@ -72,7 +72,7 @@ def format_requirement(data):
     requirements_data = data
     requirements = {}
     labels = ['OS', 'Processor', 'Memory', 'Graphics', 'Storage', 'Additional Notes', 'DirectX', 'Sound Card',
-              'Network', 'Recommended', 'Minimum', 'Hard Drive']
+              'Network', 'Recommended', 'Minimum', 'Hard Drive', 'Sound']
     key = ""
     value = []
     for i in range(1, len(requirements_data) - 1, 1):
