@@ -19,7 +19,6 @@
             <input type="checkbox" name="genres" id="{{ genre.name }}" value="{{ genre.name }}" />
             <label for="{{ genre.name }}">{{ genre.name }}</label>
             {% endfor %}
-            </select>
             </fieldset>
         </div>
 
@@ -30,7 +29,6 @@
             <input type="checkbox" name="tags" id="{{ tag.name }}" value="{{ tag.name }}" />
             <label for="{{ tag.name }}">{{ tag.name }}</label>
             {% endfor %}
-            </select>
             </fieldset>
         </div>
 
@@ -41,18 +39,6 @@
             <input type="checkbox" name="game_details" id="{{ game_detail.name }}" value="{{ game_detail.name }}" />
             <label for="{{ game_detail.name }}">{{ game_detail.name }}</label>
             {% endfor %}
-            </select>
-            </fieldset>
-        </div>
-
-        <div>
-            <fieldset>
-            <legend>Developers</legend>
-            {%  for developer in developers %}
-            <input type="checkbox" name="developers" id="{{ developer.name }}" value="{{ developer.name }}" />
-            <label for="{{ developer.name }}">{{ developer.name }}</label>
-            {% endfor %}
-            </select>
             </fieldset>
         </div>
 
