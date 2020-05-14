@@ -10,7 +10,7 @@ from database.db import Game, connect_db
 import json
 connect_db()
 
-with open(str(pathlib.Path(__file__).parent.absolute()) + '/steamer.csv', 'w', newline='') as csvfile:
+with open(str(pathlib.Path(__file__).parent.absolute()) + '/steamer.csv', 'w', newline='', encoding="utf8") as csvfile:
     csvwriter = csv.writer(csvfile, delimiter='|')
     for game in Game.objects():
         reviews = json.loads(game.reviews)
