@@ -79,7 +79,7 @@ def format_requirement(data):
         if i != len(requirements_data) - 1:
             if requirements_data[i][:-1] in labels:
                 if i != 1:
-                    requirements[key] = ", ".join(value) if len(value) else ""
+                    requirements[key] = ", ".join(value) if len(value) > 1 else value if len(value) else ""
                     value = []
                 key = requirements_data[i][:-1]
                 key = key if key != 'Hard Drive' else 'Storage'
@@ -89,8 +89,21 @@ def format_requirement(data):
                     value.append(requirements_data[i])
         else:
             value.append(requirements_data[i])
-            requirements[key] = ", ".join(value) if len(value) else ""
+            requirements[key] = ", ".join(value) if len(value) > 1 else value if len(value) else ""
     return requirements
+
+
+def clean_list(list):
+    if "NaN" in list:
+        list.remove("NaN")
+
+    if "" in list:
+        list.remove("")
+
+    for i in range(0, len(list)):
+        list[i] = list[i].replace("\xa0\r\n\t\t\t\t\t\t\t\t\t", "").replace('\\xa0\\r\\n\\t\\t\\t\\t\\t\\t\\t\\t\\t','').strip()
+
+    return list
 
 
 def populate_db():
@@ -167,24 +180,15 @@ def populate_db():
 
                 publisher = row[8] if row[8] != "NaN" else ""
 
-                popular_tags = row[9].split(',')
-                if "NaN" in popular_tags:
-                    popular_tags.remove("NaN")
+                popular_tags = clean_list(row[9].split(','))
 
-                game_details = row[10].split(',')
-                if "NaN" in game_details:
-                    game_details.remove("NaN")
+                game_details = clean_list(row[10].split(','))
 
-                languages = row[11].split(',')
-
-                if "NaN" in languages:
-                    languages.remove("NaN")
+                languages = clean_list(row[11].split(','))
 
                 achievements = row[12] if row[12] != "NaN" else ""
 
-                genres = row[13].split(',')
-                if "NaN" in genres:
-                    genres.remove("NaN")
+                genres = clean_list(row[13].split(','))
 
                 game_description = row[14] if row[14] != "NaN" else ""
 
@@ -247,6 +251,9 @@ def populate_db():
         for tag in table_tags:
             Tag(name=tag).save()
 
+        print()
+        print(table_games_details)
+        print()
         for detail in table_games_details:
             GameDetail(name=detail).save()
 
