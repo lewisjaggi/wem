@@ -23,7 +23,7 @@
 
         <h2>Genres</h2>
         <div class="col-md-7">
-            <select multiple="multiple" size="10" name="Genres" class="slt_genres" title="Select genres">
+            <select multiple="multiple" size="10" name="Genres[]" class="slt_genres" title="Select genres">
                 {%  for genre in genres %}
                     <option value="{{ genre.name }}">{{ genre.name }}</option>
                 {% endfor %}
@@ -40,7 +40,7 @@
 
         <h2>Tags</h2>
         <div class="col-md-7">
-            <select multiple="multiple" size="10" name="Tags" class="slt_tags" title="Select genres">
+            <select multiple="multiple" size="10" name="Tags[]" class="slt_tags" title="Select genres">
                 {%  for tag in tags %}
                     <option value="{{ tag.name }}">{{ tag.name }}</option>
                 {% endfor %}
@@ -57,7 +57,7 @@
 
         <h2>Game Details</h2>
         <div class="col-md-7">
-            <select multiple="multiple" size="10" name="Game Details" class="slt_game_details" title="Select genres">
+            <select multiple="multiple" size="10" name="GameDetails[]" class="slt_game_details" title="Select genres">
                 {%  for game_detail in game_details %}
                     <option value="{{ game_detail.name }}">{{ game_detail.name }}</option>
                 {% endfor %}

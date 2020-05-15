@@ -16,10 +16,12 @@ initialize_db(app)
 @app.route('/')
 def index():
     genres = Genre.objects()
+    genres = sorted(genres, key=lambda genre: genre.name)
     tags = Tag.objects()
+    tags = sorted(tags, key=lambda tag: tag.name)
     game_details = GameDetail.objects()
-    developers = Developer.objects()
-    return render_template('index.html', genres=genres, tags=tags, game_details=game_details, developers=developers)
+    game_details = sorted(game_details, key=lambda game_detail: game_detail.name)
+    return render_template('index.html', genres=genres, tags=tags, game_details=game_details)
 
 
 @app.route('/games')
@@ -40,6 +42,10 @@ def get_game(name):
 def results():
     error = None
     if request.method == 'POST':
+        genres = request.form.getlist('Genres[]')
+        tags = request.form.getlist('Tags[]')
+        game_details = request.form.getlist('GameDetails[]')
+
         return render_template('results.html')
     # the code below is executed if the request method
     # was GET or the credentials were invalid
