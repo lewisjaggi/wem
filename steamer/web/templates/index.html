@@ -3,43 +3,73 @@
 <head>
     <meta charset="UTF-8">
     <title>index</title>
+
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/prettify/r298/prettify.min.css">
+    <link rel="stylesheet" type="text/css" href="css/bootstrap-duallistbox.css">
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+    <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
+    <script src="js/jquery.bootstrap-duallistbox.js"></script>
 </head>
 <body>
     <title>Hello from Flask</title>
     <form method="post" action="/results">
-
+        <h2>Steam Web API Key</h2>
         <div>
-            <label for="steamAPI">Steam Web API Key:</label>
             <input type="text" name="steamAPI" id ="steamAPI" />
         </div>
-        <div>
-            <fieldset>
-            <legend>Genres</legend>
-            {%  for genre in genres %}
-            <input type="checkbox" name="genres" id="{{ genre.name }}" value="{{ genre.name }}" />
-            <label for="{{ genre.name }}">{{ genre.name }}</label>
-            {% endfor %}
-            </fieldset>
+
+        <h2>Genres</h2>
+        <div class="col-md-7">
+            <select multiple="multiple" size="10" name="Genres" class="slt_genres" title="Select genres">
+                {%  for genre in genres %}
+                    <option value="{{ genre.name }}">{{ genre.name }}</option>
+                {% endfor %}
+            </select>
+            <script>
+                var sltGenres = $('.slt_genres').bootstrapDualListbox({
+                    nonSelectedListLabel: 'Non-selected',
+                    selectedListLabel: 'Selected',
+                    preserveSelectionOnMove: 'moved',
+                    moveOnSelect: false
+                });
+            </script>
         </div>
 
-        <div>
-            <fieldset>
-            <legend>Tags</legend>
-            {%  for tag in tags %}
-            <input type="checkbox" name="tags" id="{{ tag.name }}" value="{{ tag.name }}" />
-            <label for="{{ tag.name }}">{{ tag.name }}</label>
-            {% endfor %}
-            </fieldset>
+        <h2>Tags</h2>
+        <div class="col-md-7">
+            <select multiple="multiple" size="10" name="Tags" class="slt_tags" title="Select genres">
+                {%  for tag in tags %}
+                    <option value="{{ tag.name }}">{{ tag.name }}</option>
+                {% endfor %}
+            </select>
+            <script>
+                var sltTags = $('.slt_tags').bootstrapDualListbox({
+                    nonSelectedListLabel: 'Non-selected',
+                    selectedListLabel: 'Selected',
+                    preserveSelectionOnMove: 'moved',
+                    moveOnSelect: false
+                });
+            </script>
         </div>
 
-        <div>
-            <fieldset>
-            <legend>Game Details</legend>
-            {%  for game_detail in game_details %}
-            <input type="checkbox" name="game_details" id="{{ game_detail.name }}" value="{{ game_detail.name }}" />
-            <label for="{{ game_detail.name }}">{{ game_detail.name }}</label>
-            {% endfor %}
-            </fieldset>
+        <h2>Game Details</h2>
+        <div class="col-md-7">
+            <select multiple="multiple" size="10" name="Game Details" class="slt_game_details" title="Select genres">
+                {%  for game_detail in game_details %}
+                    <option value="{{ game_detail.name }}">{{ game_detail.name }}</option>
+                {% endfor %}
+            </select>
+            <script>
+                var sltGameDtails = $('.slt_game_details').bootstrapDualListbox({
+                    nonSelectedListLabel: 'Non-selected',
+                    selectedListLabel: 'Selected',
+                    preserveSelectionOnMove: 'moved',
+                    moveOnSelect: false
+                });
+            </script>
         </div>
 
         <input type="submit" value="results">
