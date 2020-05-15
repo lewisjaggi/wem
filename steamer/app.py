@@ -6,14 +6,14 @@ from steamer.database.db import initialize_db, Game, Genre, Tag, GameDetail, Dev
 from steamer.steam.game import get_game_details_by_id
 from steamer.steam.user import get_games_by_user
 
-app = Flask(__name__)
+app = Flask(__name__, static_url_path='', static_folder='web/static', template_folder='web/templates')
 app.config['MONGODB_SETTINGS'] = {
     'host': 'mongodb://localhost/steamer'
 }
 initialize_db(app)
 
 
-@app.route('/')
+@app.route('/t')
 def index():
     genres = Genre.objects()
     tags = Tag.objects()
