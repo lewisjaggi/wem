@@ -13,7 +13,7 @@ app.config['MONGODB_SETTINGS'] = {
 initialize_db(app)
 
 
-@app.route('/t')
+@app.route('/')
 def index():
     genres = Genre.objects()
     tags = Tag.objects()
