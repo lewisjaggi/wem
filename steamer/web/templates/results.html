@@ -11,8 +11,8 @@
 <div class="container">
     <div class="row">
         {% for game in games %}
-            <div class="col-3 mb-5">
-                <div class="card" style="width: 18rem;">
+            <div class="col-4 mb-5">
+                <div class="card" style="width: 20rem;">
                     <img class="card-img-top"
                          src="https://steamcdn-a.akamaihd.net/steam/apps/{{ game.steam_id }}/header.jpg"
                          alt="Card image cap">
@@ -21,6 +21,8 @@
                         <p class="card-text">{{ game.desc_snippet }}</p>
                     </div>
                     <ul class="list-group list-group-flush">
+                        <li class="list-group-item">Genre(s) : {% for genre in game.genres %}
+                            <span class="badge badge-secondary">{{ genre }} </span>{% endfor %}</li>
                         <li class="list-group-item">Developer : {{ game.developer }}</li>
                         <li class="list-group-item">Release date : {{ game.release_date }}</li>
                         <li class="list-group-item">Price : {{ game.original_price }}</li>
