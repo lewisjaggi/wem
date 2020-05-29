@@ -1,12 +1,17 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import os
+import sys
+sys.path.append(os.path.join(os.path.dirname(__file__), '../../'))
+from steamer.recommendation.similarity import calculate_tfidf, calculate_score
 import mongoengine as me
 from flask_mongoengine import MongoEngine
 import csv
 import pathlib
 import json
 import re
+import math
 
 db = MongoEngine()
 
@@ -42,6 +47,7 @@ class Game(db.Document):
     recommended_requirements = db.StringField()
     original_price = db.StringField()
     discount_price = db.StringField()
+    score = db.FloatField()
 
     @classmethod
     def get_by_id(cls,id):
@@ -50,19 +56,27 @@ class Game(db.Document):
 
 class Genre(db.Document):
     name = db.StringField(required=True, unique=True)
+    count = db.IntField(required=True)
 
 
 class Tag(db.Document):
     name = db.StringField(required=True, unique=True)
+    count = db.IntField(required=True)
 
 
 class GameDetail(db.Document):
     name = db.StringField(required=True, unique=True)
+    count = db.IntField(required=True)
 
 
-class Developer(db.Document):
-    name = db.StringField(required=True, unique=True)
+class TfidfGame(db.Document):
+    steam_id = db.IntField(required=True, unique=True)
+    tfidf = db.ListField(required=True)
 
+
+class NumberVote(db.Document):
+    min = db.IntField(required=True)
+    max = db.IntField(required=True)
 
 def connect_db():
     # Connect using MongoEngine
@@ -105,27 +119,35 @@ def clean_list(list):
         list.remove("")
 
     for i in range(0, len(list)):
-        list[i] = list[i].replace("\xa0\r\n\t\t\t\t\t\t\t\t\t", "").replace('\\xa0\\r\\n\\t\\t\\t\\t\\t\\t\\t\\t\\t','').strip()
+        list[i] = list[i].replace("\xa0\r\n\t\t\t\t\t\t\t\t\t", "").replace('\\xa0\\r\\n\\t\\t\\t\\t\\t\\t\\t\\t\\t',
+                                                                            '').strip()
 
     return list
 
 
 def populate_db():
+    print("")
+    print("The process will take several minutes")
+    print("Start connection to MongoDB")
     db_config = Config.MONGODB_SETTINGS
     connection = me.connect(**db_config)
     me.connection.get_db()
+    print("Connected")
     connection.drop_database(db_config['db'])
+    print("Database cleaned")
     is_header = True
+    print("Start importing games")
+
+    table_genres = {}
+    table_tags = {}
+    table_games_details = {}
+    max_vote = 0
+    min_vote = math.inf
+
 
     with open(str(pathlib.Path(__file__).parent.absolute()) + '/steam_games.csv', newline='',
               encoding="utf8") as csvfile:
         reader = csv.reader(csvfile, delimiter=",")
-
-        table_genres = []
-        table_tags = []
-        table_games_details = []
-        table_languages = []
-        table_developers = []
 
         for row in reader:
             if is_header:
@@ -164,14 +186,25 @@ def populate_db():
                     elif len(all_reviews) > i_reviews + 1:
                         i_reviews += 1
                         number_reviews += "," + all_reviews[i_reviews][:-1]
+
+                current_vote = 0
+
+                if number_reviews.replace(',','').isdigit():
+                    current_vote = int(number_reviews.replace(',', ''))
+
+                max_vote = current_vote if current_vote > max_vote else max_vote
+                min_vote = current_vote if current_vote < min_vote else min_vote
+
                 i_reviews += 1
 
                 p = re.compile(r' \d+%')
                 percentage = p.search(all_reviews[i_reviews]) if len(all_reviews) > i_reviews else ""
-                percentage_reviews = percentage.group(0)[1:] if percentage != "" and percentage is not None else ""
+                percentage_reviews = percentage.group(0)[1:-1] if percentage != "" and percentage is not None else ""
+
+                desc_reviews = all_reviews[i_reviews].split('%')[1] if percentage_reviews != "" else ""
                 i_reviews += 1
 
-                desc_reviews = all_reviews[i_reviews] if len(all_reviews) > i_reviews else ""
+                desc_reviews += "," + all_reviews[i_reviews] if len(all_reviews) > i_reviews else ""
 
                 reviews = {"status": str(status_reviews) if str(status_reviews) != "NaN" else "",
                            "count": str(number_reviews) if str(number_reviews) != "NaN" else "",
@@ -207,7 +240,7 @@ def populate_db():
                 discount_price = row[19] if row[19] != "NaN" else ""
 
                 try:
-                    Game(
+                    game = Game(
                         steam_id=steam_id,
                         url=url,
                         name=name,
@@ -224,45 +257,66 @@ def populate_db():
                         minimum_requirements=json.dumps(minimum_requirements),
                         recommended_requirements=json.dumps(recommended_requirements),
                         original_price=original_price,
-                        discount_price=discount_price
+                        discount_price=discount_price,
+                        score=0
                     ).save()
                 except:
                     print("The id : " + steam_id + " is duplicated")
 
-
                 for genre in genres:
-                    if genre not in table_genres:
-                        table_genres.append(genre)
+                    if genre not in table_genres.keys():
+                        table_genres[genre] = 1
+                    else:
+                        table_genres[genre] += 1
 
                 for tag in popular_tags:
-                    if tag not in table_tags:
-                        table_tags.append(tag)
+                    if tag not in table_tags.keys():
+                        table_tags[tag] = 1
+                    else:
+                        table_tags[tag] += 1
 
                 for detail in game_details:
-                    if detail not in table_games_details:
-                        table_games_details.append(detail)
+                    if detail not in table_games_details.keys():
+                        table_games_details[detail] = 1
+                    else:
+                        table_games_details[detail] += 1
 
-                for language in languages:
-                    if language not in table_languages:
-                        table_languages.append(language)
+    print("Games imported")
+    print("Start importing genres")
+    for name, count in table_genres.items():
+        Genre(name=name, count=count).save()
 
-                if developer not in table_developers:
-                    table_developers.append(developer)
+    print("Genres imported")
+    print("Start importing popular tags")
+    for name, count in table_tags.items():
+        Tag(name=name, count=count).save()
 
-        for genre in table_genres:
-            Genre(name=genre).save()
+    print("Popular tags imported")
+    print("Start importing game details")
+    for name, count in table_games_details.items():
+        GameDetail(name=name, count=count).save()
+    print("Game details imported")
+    print("Start calculation tfidf")
+    total_games = len(Game.objects())
+    genres = Genre.objects()
+    tags = Tag.objects()
+    game_details = GameDetail.objects()
+    tfidf_games = {game.steam_id: calculate_tfidf(game, total_games, genres, tags, game_details) for game in Game.objects()}
 
-        for tag in table_tags:
-            Tag(name=tag).save()
-
-        print()
-        print(table_games_details)
-        print()
-        for detail in table_games_details:
-            GameDetail(name=detail).save()
-
-        for developer in table_developers:
-            Developer(name=developer).save()
+    for steam_id, tfidf in tfidf_games.items():
+        TfidfGame(
+            steam_id=steam_id,
+            tfidf=tfidf.tolist()
+        ).save()
+    print("Tfidf calculated")
+    print("Start calculation scores")
+    NumberVote(min=min_vote, max=max_vote).save()
+    for game in Game.objects():
+        score = calculate_score(game, NumberVote.objects()[0])
+        game.update(score=score)
+    print("Scores calculated")
+    print("Database Ready")
+    print("")
 
 
 if __name__ == "__main__":
