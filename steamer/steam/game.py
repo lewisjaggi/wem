@@ -17,8 +17,8 @@ def get_game_details_by_id(game_id):
     if len(game) == 0:
         game = get_api_game_details_by_id(game_id)
         game.save()
-        return game.to_json()
-    return game[0].to_json()
+        return game
+    return game[0]
 
 
 def get_api_game_details_by_id(game_id):

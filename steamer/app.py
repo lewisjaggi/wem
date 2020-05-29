@@ -38,18 +38,26 @@ def get_game(name):
     return Response(game, mimetype="application/json", status=200)
 
 
-@app.route('/results', methods=['POST'])
+@app.route('/results', methods=['GET'])
 def results():
     error = None
     if request.method == 'POST':
+
         genres = request.form.getlist('Genres[]')
         tags = request.form.getlist('Tags[]')
         game_details = request.form.getlist('GameDetails[]')
+        #algo
 
         return render_template('results.html')
     # the code below is executed if the request method
     # was GET or the credentials were invalid
-    return render_template('index.html', name=error)
+    game1 = get_game_details_by_id(637090)
+    game2 = get_game_details_by_id(221100)
+    game3 = get_game_details_by_id(8500)
+    game4 = get_game_details_by_id(601150)
+    game5 = get_game_details_by_id(477160)
+    game6 = get_game_details_by_id(644930)
+    return render_template('results.html', games=[game1,game2,game3,game4,game5,game6],name=error)
 
 
 @app.route('/users/<steam_id>/games')
