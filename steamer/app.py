@@ -2,9 +2,12 @@
 # -*- coding: utf-8 -*-
 
 from flask import Flask, render_template, request, Response
-from steamer.database.db import initialize_db, Game, Genre, Tag, GameDetail, Developer
+from steamer.database.db import initialize_db, Game, Genre, Tag, GameDetail, TfidfGame, NumberVote
 from steamer.steam.game import get_game_details_by_id
 from steamer.steam.user import get_games_by_user
+from steamer.recommendation.similarity import calculate_similarities, calculate_score
+from steamer.recommendation.searchinggame import SearchingGame
+import json
 
 app = Flask(__name__, static_url_path='', static_folder='web/static', template_folder='web/templates')
 app.config['MONGODB_SETTINGS'] = {
@@ -46,10 +49,34 @@ def results():
         tags = request.form.getlist('Tags[]')
         game_details = request.form.getlist('GameDetails[]')
 
+        searching_game = SearchingGame()
+        searching_game.genres = genres
+        searching_game.popular_tags = tags
+        searching_game.game_details = game_details
+
+        games = Game.objects()
+        total_games = len(games)
+        genres = Genre.objects()
+        tags = Tag.objects()
+        game_details = GameDetail.objects()
+        tfidf_games = TfidfGame.objects()
+        numberVote = NumberVote.objects()[0]
+
+        similarities = calculate_similarities(searching_game, games, genres, tags, game_details, tfidf_games)
+
+        similarities = sorted(similarities.items(), key=lambda item: item[1], reverse=True)
+
+        for similar in similarities:
+            print(similar)
+            print(type(similar))
+            print(similar[0])
+            print(type(similar[0]))
+        prediction = [Game.objects().get(steam_id=similar[0]).name for similar in similarities]
+        return json.dumps(prediction)
         return render_template('results.html')
     # the code below is executed if the request method
     # was GET or the credentials were invalid
-    return render_template('index.html', name=error)
+    return render_template('index.html')
 
 
 @app.route('/users/<steam_id>/games')
