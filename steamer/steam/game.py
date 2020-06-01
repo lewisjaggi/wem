@@ -15,9 +15,16 @@ def clean_html(raw_html):
 def get_game_details_by_id(game_id):
     game = Game.objects(steam_id=game_id)
     if len(game) == 0:
-        game = get_api_game_details_by_id(game_id)
-        game.save()
-        return game.to_json()
+        game = get_api_game_details_by_id(str(game_id))
+        if game is not None:
+            print("")
+            print("")
+            print(game)
+            print("")
+            print("")
+            game.save()
+            return game.to_json()
+        return None
     return game[0].to_json()
 
 
@@ -29,34 +36,58 @@ def get_api_game_details_by_id(game_id):
     r = requests.get('https://store.steampowered.com/api/appdetails', params=payload)
     r_steam_spy = requests.get('https://steamspy.com/api.php', params={'request': 'appdetails', 'appid': game_id})
 
-    if r.status_code != 200 or r_steam_spy.status_code != 200 or not r.json().get(game_id).get('success'):
-        return {
+    if r.status_code != 200 or r_steam_spy.status_code != 200 or not r.json()[game_id]['success']:
+        return None
+        '''return {
             'status_code': 400,
             'error': 'Bad Request'
-        }
+        }'''
 
     steam_game = r.json().get(game_id).get('data')
-    steam_spy = r_steam_spy.json()
 
-    total_reviews = steam_spy.get('positive') + steam_spy.get('negative')
-    percentage_positive_reviews = '0%' if total_reviews == 0 else str(steam_spy.get('positive') / total_reviews) + '%'
+    game = Game.objects(steam_id=steam_game.get('steam_appid'))
+    if len(game) == 0:
+        steam_spy = r_steam_spy.json()
 
-    return Game(
-        steam_id=steam_game.get('steam_appid'),
-        url='https://store.steampowered.com/app/' + str(steam_game.get('steam_appid')) + '/',
-        name=steam_game.get('name'),
-        desc_snippet=steam_game.get('short_description'),
-        reviews="{'count': " + str(total_reviews) + ", 'percentage': " + percentage_positive_reviews + "}",
-        release_date=steam_game.get('release_date').get('date'),
-        developer=steam_game.get('developers')[0],
-        popular_tags=steam_spy.get('tags').keys() if len(steam_spy.get('tags')) > 0 else [],
-        game_details=map(lambda x: x.get('description'), steam_game.get('categories')),
-        languages=map(lambda x: x.strip(), steam_game.get('supported_languages').split(',')),
-        genres=map(lambda x: x.get('description'), steam_game.get('genres')),
-        game_description=clean_html(steam_game.get('detailed_description')),
-        mature_content='',
-        minimum_requirements=steam_game.get('pc_requirements').get('minimum'),
-        recommended_requirements=steam_game.get('pc_requirements').get('recommended'),
-        original_price=steam_game.get('price_overview').get('final_formatted'),
-        discount_price=''
-    )
+        total_reviews = steam_spy.get('positive') + steam_spy.get('negative')
+        percentage_positive_reviews = '0%' if total_reviews == 0 else str(steam_spy.get('positive') / total_reviews) + '%'
+
+        steam_id = steam_game.get('steam_appid')
+        url = 'https://store.steampowered.com/app/' + str(steam_game.get('steam_appid')) + '/'
+        name = steam_game.get('name')
+        desc_snippet = steam_game.get('short_description')
+        reviews = "{'count': " + str(total_reviews) + ", 'percentage': " + percentage_positive_reviews + "}"
+        release_date = steam_game.get('release_date').get('date')
+        developer = steam_game.get('developers')[0]
+        popular_tags = steam_spy.get('tags').keys() if len(steam_spy.get('tags')) > 0 else []
+        game_details = map(lambda x: x.get('description'), steam_game.get('categories'))
+        languages = map(lambda x: x.strip(), steam_game.get('supported_languages').split(','))
+        genres = map(lambda x: x.get('description'), steam_game.get('genres'))
+        game_description = clean_html(steam_game.get('detailed_description'))
+        mature_content = ''
+        minimum_requirements = steam_game.get('pc_requirements').get('minimum')
+        recommended_requirements = steam_game.get('pc_requirements').get('recommended')
+        original_price = steam_game.get('price_overview').get('final_formatted') if 'price_overview' in steam_game.keys() else ''
+        discount_price = ''
+
+        return Game(
+            steam_id=steam_id,
+            url=url,
+            name=name,
+            desc_snippet=desc_snippet,
+            reviews=reviews,
+            release_date=release_date,
+            developer=developer,
+            popular_tags=popular_tags,
+            game_details=game_details,
+            languages=languages,
+            genres=genres,
+            game_description=game_description,
+            mature_content=mature_content,
+            minimum_requirements=minimum_requirements,
+            recommended_requirements=recommended_requirements,
+            original_price=original_price,
+            discount_price=discount_price
+        )
+
+    return None

@@ -1,6 +1,6 @@
 import requests
 
-API_KEY = '7F2C968B4DD899E3D99D38201F6AD972'
+API_KEY = '22F49C23A2F2EE53D628F6DB3228515E'
 
 
 def get_games_by_user(user_id):

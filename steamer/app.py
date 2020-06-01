@@ -66,11 +66,6 @@ def results():
 
         similarities = sorted(similarities.items(), key=lambda item: item[1], reverse=True)
 
-        for similar in similarities:
-            print(similar)
-            print(type(similar))
-            print(similar[0])
-            print(type(similar[0]))
         prediction = [Game.objects().get(steam_id=similar[0]).name for similar in similarities]
         return json.dumps(prediction)
         return render_template('results.html')
@@ -91,3 +86,10 @@ def get_game_by_id(game_id):
     r = get_game_details_by_id(game_id)
 
     return Response(r, mimetype="application/json", status=200)
+
+@app.route('/test')
+def test():
+    user_games = json.loads(get_games_by_user(76561197992131568))["response"]["games"]
+    user_games = [get_game_details_by_id(user_game["appid"]) for user_game in user_games]
+    print("toto")
+    return Response(user_games, mimetype="application/json", status=200)
