@@ -12,12 +12,8 @@ def get_games_by_user(user_id):
     }
     r = requests.get('http://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/', params=payload)
     if r.status_code == 200:
-        print('OK')
-        print(r.text)
         return r.text
     else:
-        print('ERROR')
-        print(r.text)
         return r.text
 
 

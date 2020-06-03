@@ -3,6 +3,7 @@
 
 import os
 import sys
+
 sys.path.append(os.path.join(os.path.dirname(__file__), '../../'))
 from steamer.recommendation.similarity import calculate_tfidf, calculate_score
 import mongoengine as me
@@ -45,9 +46,13 @@ class Game(db.Document):
     mature_content = db.StringField()
     minimum_requirements = db.StringField()
     recommended_requirements = db.StringField()
-    original_price = db.StringField()
-    discount_price = db.StringField()
+    original_price = db.FloatField()
+    discount_price = db.FloatField()
     score = db.FloatField()
+
+    @classmethod
+    def get_by_id(cls, id):
+        return cls.objects(steam_id=id)
 
 
 class Genre(db.Document):
@@ -73,6 +78,7 @@ class TfidfGame(db.Document):
 class NumberVote(db.Document):
     min = db.IntField(required=True)
     max = db.IntField(required=True)
+
 
 def connect_db():
     # Connect using MongoEngine
@@ -121,6 +127,13 @@ def clean_list(list):
     return list
 
 
+def clean_price(price):
+    price = price.replace('$', '').strip()
+    if price != "NaN" or price != '':
+        return 0.0
+    return float(price)
+
+
 def populate_db():
     print("")
     print("The process will take several minutes")
@@ -139,7 +152,6 @@ def populate_db():
     table_games_details = {}
     max_vote = 0
     min_vote = math.inf
-
 
     with open(str(pathlib.Path(__file__).parent.absolute()) + '/steam_games.csv', newline='',
               encoding="utf8") as csvfile:
@@ -185,7 +197,7 @@ def populate_db():
 
                 current_vote = 0
 
-                if number_reviews.replace(',','').isdigit():
+                if number_reviews.replace(',', '').isdigit():
                     current_vote = int(number_reviews.replace(',', ''))
 
                 max_vote = current_vote if current_vote > max_vote else max_vote
@@ -231,9 +243,9 @@ def populate_db():
 
                 recommended_requirements = format_requirement(row[17].split(","))
 
-                original_price = row[18] if row[18] != "NaN" else ""
+                original_price = clean_price(row[18])
 
-                discount_price = row[19] if row[19] != "NaN" else ""
+                discount_price = clean_price(row[19])
 
                 try:
                     game = Game(
@@ -297,7 +309,8 @@ def populate_db():
     genres = Genre.objects()
     tags = Tag.objects()
     game_details = GameDetail.objects()
-    tfidf_games = {game.steam_id: calculate_tfidf(game, total_games, genres, tags, game_details) for game in Game.objects()}
+    tfidf_games = {game.steam_id: calculate_tfidf(game, total_games, genres, tags, game_details) for game in
+                   Game.objects()}
 
     for steam_id, tfidf in tfidf_games.items():
         TfidfGame(
@@ -313,6 +326,43 @@ def populate_db():
     print("Scores calculated")
     print("Database Ready")
     print("")
+
+
+def update_caracteristics(genres, tags, game_details):
+    for genre in genres:
+        db_genre = Genre.objects(name=genre)
+        if len(db_genre) == 0:
+            Genre(name=genre, count=1).save()
+        else:
+            db_genre[0].update(count=db_genre[0].count + 1)
+
+    for tag in tags:
+        db_tag = Tag.objects(name=tag)
+        if len(db_tag) == 0:
+            Tag(name=tag, count=1).save()
+        else:
+            db_tag[0].update(count=db_tag[0].count + 1)
+
+    for game_detail in game_details:
+        db_game_detail = GameDetail.objects(name=game_detail)
+        if len(db_game_detail) == 0:
+            GameDetail(name=game_detail, count=1).save()
+        else:
+            db_game_detail[0].update(count=db_game_detail[0].count + 1)
+
+
+def update_tfidf():
+    all_games = Game.objects()
+
+    for game in all_games:
+        tfidf = TfidfGame.objects(steam_id=game.steam_id)
+        if len(tfidf) == 0:
+            TfidfGame(steam_id=game.steam_id, tfidf=calculate_tfidf(game, len(all_games), Genre.objects(),
+                                      Tag.objects(), GameDetail.objects())).save()
+        else:
+            tfidf[0].update(
+                tfidf=calculate_tfidf(game, len(all_games), Genre.objects(),
+                                      Tag.objects(), GameDetail.objects()))
 
 
 if __name__ == "__main__":
