@@ -57,6 +57,7 @@ def get_api_game_details_by_id(game_id):
         game_details = clean_list(list(game_details))
         languages = map(lambda x: x.strip(), steam_game.get('supported_languages').split(','))
         languages = clean_list(list(languages))
+        languages = [language for language in languages if language.isalpha()]
         genres = map(lambda x: x.get('description'), steam_game.get('genres'))
         genres = clean_list(list(genres))
         game_description = clean_html(steam_game.get('detailed_description'))
@@ -88,6 +89,6 @@ def get_api_game_details_by_id(game_id):
             score=0
         ).save()
 
-        update_caracteristics(genres, popular_tags, game_details)
+        update_caracteristics(genres, popular_tags, game_details, languages)
         return game
     return game[0]

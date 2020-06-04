@@ -5,6 +5,7 @@
 import numpy as np
 import json
 import re
+from steamer.database.caracteristics import validated_genres, validated_tags, validated_game_details
 from sklearn.metrics.pairwise import cosine_similarity
 
 
@@ -23,38 +24,56 @@ def calculate_score(game, numberVote):
 def calculate_tfidf(game, total_games, genres, tags, game_details):
     game_tfidf = []
 
-    game_genres = game.genres
-    generator_genres = [genre for genre in genres.order_by('name') if genre.count > 10]
-    for genre in generator_genres:
-        tfidf = 1.0
-        if genre.name in game_genres:
-            rank = [game.genres.index(name) if name == genre.name else -1 for name in game.genres][0]
-            total_rank = len(game.genres)
-            ratio_ranking = (total_rank - rank) / total_rank
-            tfidf += np.log(total_games / genre.count) * ratio_ranking
-        game_tfidf.append(tfidf)
+    validated_genres_count = dict((validated_genre, [0, 0]) for validated_genre in validated_genres)
+    total_genres = len(game.genres)
+    for genre in game.genres:
+        for validated_genre in validated_genres:
+            if validated_genre in genre:
+                validated_genres_count[validated_genre][0] += 1 - game.genres.index(genre) / total_genres
+                validated_genres_count[validated_genre][1] += 1
 
-    game_popular_tags = game.popular_tags
-    generator_tags = [tag for tag in tags.order_by('name') if tag.count > 10]
-    for tag in generator_tags:
-        tfidf = 1.0
-        if tag.name in game_popular_tags:
-            rank = [game.popular_tags.index(name) if name == tag.name else -1 for name in game.popular_tags][0]
-            total_rank = len(game.popular_tags)
-            ratio_ranking = (total_rank - rank) / total_rank
-            tfidf += np.log(total_games / tag.count) * ratio_ranking
-        game_tfidf.append(tfidf)
+    validated_tags_count = dict((validated_tag, [0, 0]) for validated_tag in validated_tags)
+    total_tags = len(game.popular_tags)
+    for tag in game.popular_tags:
+        for validated_tag in validated_tags:
+            if validated_tag in tag:
+                validated_tags_count[validated_tag][0] += 1 - game.popular_tags.index(tag) / total_tags
+                validated_tags_count[validated_tag][1] += 1
 
-    game_game_details = game.game_details
-    generator_game_details = [game_detail for game_detail in game_details.order_by('name') if game_detail.count > 10]
-    for gameDetail in generator_game_details:
+    validated_game_details_count = dict((validated_game_detail, [0, 0]) for validated_game_detail in validated_game_details)
+    total_game_details = len(game.game_details)
+    for game_detail in game.game_details:
+        for validated_game_detail in validated_game_details:
+            if validated_game_detail in game_detail:
+                validated_game_details_count[validated_game_detail][0] += 1 - game.game_details.index(game_detail) / total_game_details
+                validated_game_details_count[validated_game_detail][1] += 1
+
+    for genre in genres.order_by('name'):
         tfidf = 1.0
-        if gameDetail.name in game_game_details:
-            rank = [game.game_details.index(name) if name == gameDetail.name else -1 for name in game.game_details][0]
-            total_rank = len(game.game_details)
-            ratio_ranking = (total_rank - rank) / total_rank
-            tfidf += np.log(total_games / gameDetail.count) * ratio_ranking
-        game_tfidf.append(tfidf)
+        if genre.count > 0:
+            validated_genre_count = validated_genres_count[genre.name]
+            ranking = validated_genre_count[0]
+            count = validated_genre_count[1]
+            tfidf += count * np.log(total_games / genre.count) * ranking
+            game_tfidf.append(tfidf)
+
+    for tag in tags.order_by('name'):
+        tfidf = 1.0
+        if tag.count > 0:
+            validated_tag_count = validated_tags_count[tag.name]
+            ranking = validated_tag_count[0]
+            count = validated_tag_count[1]
+            tfidf += count * np.log(total_games / tag.count) * ranking
+            game_tfidf.append(tfidf)
+
+    for game_detail in game_details.order_by('name'):
+        tfidf = 1.0
+        if game_detail.count > 0:
+            validated_game_detail_count = validated_game_details_count[game_detail.name]
+            ranking = validated_game_detail_count[0]
+            count = validated_game_detail_count[1]
+            tfidf += count * np.log(total_games / game_detail.count) * ranking
+            game_tfidf.append(tfidf)
 
     return np.asarray(game_tfidf)
 
@@ -97,22 +116,22 @@ def calculate_library(games, genres, tags, game_details):
 
     for game in games:
         for genre in game.genres:
-            if genres.get(name=genre).count > 10:
-                current = genre.strip()
-                count_genres[current] += 1
-                total_genre += 1
+            for validated_genre in validated_genres:
+                if validated_genre in genre:
+                    count_genres[validated_genre] += 1
+                    total_genre += 1
 
         for tag in game.popular_tags:
-            if tags.get(name=tag).count > 10:
-                current = tag.strip()
-                count_tags[current] += 1
-                total_tag += 1
+            for validated_tag in validated_tags:
+                if validated_tag in tag:
+                    count_tags[validated_tag] += 1
+                    total_tag += 1
 
-        for detail in game.game_details:
-            if game_details.get(name=detail).count > 10:
-                current = detail.strip()
-                count_games_details[current] += 1
-                total_game_detail += 1
+        for game_detail in game.game_details:
+            for validated_game_detail in validated_game_details:
+                if validated_game_detail in game_detail:
+                    count_games_details[validated_game_detail] += 1
+                    total_game_detail += 1
 
     vector = []
     for key, value in count_genres.items():

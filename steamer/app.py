@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from flask import Flask, render_template, request, Response
-from steamer.database.db import initialize_db, Game, Genre, Tag, GameDetail, TfidfGame, NumberVote, update_tfidf
+from steamer.database.db import initialize_db, Game, Genre, Tag, GameDetail, TfidfGame, NumberVote, update_tfidf, Language
 from steamer.steam.game import get_game_details_by_id
 from steamer.steam.user import get_games_by_user
 from steamer.recommendation.similarity import calculate_similarities, calculate_score
@@ -18,13 +18,15 @@ initialize_db(app)
 
 @app.route('/')
 def index():
-    genres = [genre for genre in Genre.objects() if genre.count > 1]
+    genres = [genre for genre in Genre.objects() if genre.count > 10]
     genres = sorted(genres, key=lambda genre: genre.name)
-    tags = [tag for tag in Tag.objects() if tag.count > 1]
+    tags = [tag for tag in Tag.objects() if tag.count > 10]
     tags = sorted(tags, key=lambda tag: tag.name)
-    game_details = [game_detail for game_detail in GameDetail.objects() if game_detail.count > 1]
+    game_details = [game_detail for game_detail in GameDetail.objects() if game_detail.count > 10]
     game_details = sorted(game_details, key=lambda game_detail: game_detail.name)
-    return render_template('index.html', genres=genres, tags=tags, game_details=game_details)
+    languages = Language.objects().order_by('name')
+    print(languages)
+    return render_template('index.html', genres=genres, tags=tags, game_details=game_details, languages=languages)
 
 
 @app.route('/games')
@@ -54,6 +56,7 @@ def results():
         game_details = request.form.getlist('GameDetails[]')
         filter_price = request.form.getlist('filter_price')[0].split(',')
         filter_reviews = request.form.get('filter_reviews')
+        filter_languages = request.form.get('filter_languages[]')
 
         print("Generate searching game")
         searching_game = SearchingGame()
@@ -78,7 +81,14 @@ def results():
                 percentage = json.loads(game["reviews"])["percentage"]
                 if percentage != "":
                     if float(percentage) >= float(filter_reviews):
-                        games_filtred.append(game)
+                        language_filtred = True
+                        if filter_languages is not None:
+                            language_filtred = False
+                            for language in filter_languages:
+                                if language in game.languages:
+                                    language_filtred = True
+                        if language_filtred:
+                            games_filtred.append(game)
 
         print("Calculate similarities")
         genres = Genre.objects()

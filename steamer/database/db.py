@@ -13,6 +13,7 @@ import pathlib
 import json
 import re
 import math
+from steamer.database.caracteristics import validated_genres, validated_tags, validated_game_details
 
 db = MongoEngine()
 
@@ -79,6 +80,9 @@ class NumberVote(db.Document):
     min = db.IntField(required=True)
     max = db.IntField(required=True)
 
+
+class Language(db.Document):
+    name = db.StringField(required=True, unique=True)
 
 def connect_db():
     # Connect using MongoEngine
@@ -147,11 +151,12 @@ def populate_db():
     is_header = True
     print("Start importing games")
 
-    table_genres = {}
-    table_tags = {}
-    table_games_details = {}
+    table_genres = dict((validated_genre, 0) for validated_genre in validated_genres)
+    table_tags = dict((validated_tag, 0) for validated_tag in validated_tags)
+    table_game_details = dict((validated_game_detail, 0) for validated_game_detail in validated_game_details)
     max_vote = 0
     min_vote = math.inf
+    table_languages = []
 
     with open(str(pathlib.Path(__file__).parent.absolute()) + '/steam_games.csv', newline='',
               encoding="utf8") as csvfile:
@@ -230,6 +235,7 @@ def populate_db():
                 game_details = clean_list(row[10].split(','))
 
                 languages = clean_list(row[11].split(','))
+                languages = [language for language in languages if language.isalpha()]
 
                 achievements = row[12] if row[12] != "NaN" else ""
 
@@ -272,22 +278,23 @@ def populate_db():
                     print("The id : " + steam_id + " is duplicated")
 
                 for genre in genres:
-                    if genre not in table_genres.keys():
-                        table_genres[genre] = 1
-                    else:
-                        table_genres[genre] += 1
+                    for validated_genre in table_genres.keys():
+                        if validated_genre in genre:
+                            table_genres[validated_genre] += 1
 
                 for tag in popular_tags:
-                    if tag not in table_tags.keys():
-                        table_tags[tag] = 1
-                    else:
-                        table_tags[tag] += 1
+                    for validated_tag in table_tags.keys():
+                        if validated_tag in tag:
+                            table_tags[validated_tag] += 1
 
                 for detail in game_details:
-                    if detail not in table_games_details.keys():
-                        table_games_details[detail] = 1
-                    else:
-                        table_games_details[detail] += 1
+                    for validated_detail in table_game_details.keys():
+                        if validated_detail in detail:
+                            table_game_details[validated_detail] += 1
+
+                for language in languages:
+                    if language not in table_languages:
+                        table_languages.append(language)
 
     print("Games imported")
     print("Start importing genres")
@@ -301,9 +308,15 @@ def populate_db():
 
     print("Popular tags imported")
     print("Start importing game details")
-    for name, count in table_games_details.items():
+    for name, count in table_game_details.items():
         GameDetail(name=name, count=count).save()
     print("Game details imported")
+
+    print("Start importing languages")
+    for language in table_languages:
+        Language(name=language).save()
+    print("Languages imported")
+
     print("Start calculation tfidf")
     total_games = len(Game.objects())
     genres = Genre.objects()
@@ -328,27 +341,29 @@ def populate_db():
     print("")
 
 
-def update_caracteristics(genres, tags, game_details):
+def update_caracteristics(genres, tags, game_details, languages):
     for genre in genres:
-        db_genre = Genre.objects(name=genre)
-        if len(db_genre) == 0:
-            Genre(name=genre, count=1).save()
-        else:
-            db_genre[0].update(count=db_genre[0].count + 1)
+        for validated_genre in validated_genres:
+            if validated_genre in genre:
+                db_genre = Genre.objects(name=validated_genre)
+                db_genre[0].update(count=db_genre[0].count + 1)
 
     for tag in tags:
-        db_tag = Tag.objects(name=tag)
-        if len(db_tag) == 0:
-            Tag(name=tag, count=1).save()
-        else:
-            db_tag[0].update(count=db_tag[0].count + 1)
+        for validated_tag in validated_tags:
+            if validated_tag in tag:
+                db_tag = Tag.objects(name=validated_tag)
+                db_tag[0].update(count=db_tag[0].count + 1)
 
     for game_detail in game_details:
-        db_game_detail = GameDetail.objects(name=game_detail)
-        if len(db_game_detail) == 0:
-            GameDetail(name=game_detail, count=1).save()
-        else:
-            db_game_detail[0].update(count=db_game_detail[0].count + 1)
+        for validated_game_detail in validated_game_details:
+            if validated_game_detail in game_detail:
+                db_game_detail = GameDetail.objects(name=validated_game_detail)
+                db_game_detail[0].update(count=db_game_detail[0].count + 1)
+
+    for language in languages:
+        db_language = Language.objects(name=language)
+        if len(db_language) == 0:
+            Language(name=language).save()
 
 
 def update_tfidf():

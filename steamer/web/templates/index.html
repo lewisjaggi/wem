@@ -29,6 +29,13 @@
         <div>
             <b>0 CHF </b><input name="filter_price" id="price" type="text" value="" data-slider-min="0" data-slider-max="150" data-slider-step="1" data-slider-value="[0,100]"/><b> 150 CHF</b>
         </div>
+        <div>
+            <select class="selectpicker" size="10" multiple="multiple" name="filter_languages[]">
+                {%  for language in languages %}
+                    <option value="{{ language.name }}">{{ language.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
         <script>
             $('#reviews').slider({
                 formatter: function(value) {
