@@ -23,7 +23,7 @@ validated_tags = [
     "Action",
     "Adventure",
     "Multiplayer",
-    "Battle Roayle",
+    "Battle Royale",
     "Beat 'em up",
     "Board Game",
     "RPG",

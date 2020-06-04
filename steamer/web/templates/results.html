@@ -21,7 +21,7 @@
                         <p class="card-text">{{ game.desc_snippet }}</p>
                     </div>
                     <ul class="list-group list-group-flush">
-                        <li class="list-group-item">Genre(s) : {% for genre in game.genres %}
+                        <li class="list-group-item">Genre(s) : {% for genre in genres[game.steam_id] %}
                             <span class="badge badge-secondary">{{ genre }} </span>{% endfor %}</li>
                         <li class="list-group-item">Developer : {{ game.developer }}</li>
                         <li class="list-group-item">Release date : {{ game.release_date }}</li>

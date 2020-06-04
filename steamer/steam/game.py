@@ -2,9 +2,9 @@ import json
 import re
 
 import requests
-
-from steamer.database.db import Game, clean_list, update_caracteristics, clean_price
-
+import json
+from steamer.database.db import Game, clean_list, update_caracteristics, clean_price, valid_caracteristic
+from steamer.database.caracteristics import validated_genres, validated_tags, validated_game_details
 
 def clean_html(raw_html):
     clean_r = re.compile('<.*?>')
@@ -52,14 +52,14 @@ def get_api_game_details_by_id(game_id):
         release_date = steam_game.get('release_date').get('date')
         developer = steam_game.get('developers')[0]
         popular_tags = steam_spy.get('tags').keys() if len(steam_spy.get('tags')) > 0 else []
-        popular_tags = clean_list(list(popular_tags))
+        popular_tags = valid_caracteristic(clean_list(list(popular_tags)), validated_tags)
         game_details = map(lambda x: x.get('description'), steam_game.get('categories'))
-        game_details = clean_list(list(game_details))
+        game_details = valid_caracteristic(clean_list(list(game_details)), validated_game_details)
         languages = map(lambda x: x.strip(), steam_game.get('supported_languages').split(','))
         languages = clean_list(list(languages))
         languages = [language for language in languages if language.isalpha()]
         genres = map(lambda x: x.get('description'), steam_game.get('genres'))
-        genres = clean_list(list(genres))
+        genres = valid_caracteristic(clean_list(list(genres)), validated_genres)
         game_description = clean_html(steam_game.get('detailed_description'))
         mature_content = ''
         minimum_requirements = steam_game.get('pc_requirements').get('minimum')
@@ -76,10 +76,10 @@ def get_api_game_details_by_id(game_id):
             reviews=reviews,
             release_date=release_date,
             developer=developer,
-            popular_tags=popular_tags,
-            game_details=game_details,
+            popular_tags=json.dumps(popular_tags),
+            game_details=json.dumps(game_details),
             languages=languages,
-            genres=genres,
+            genres=json.dumps(genres),
             game_description=game_description,
             mature_content=mature_content,
             minimum_requirements=minimum_requirements,
@@ -90,5 +90,6 @@ def get_api_game_details_by_id(game_id):
         ).save()
 
         update_caracteristics(genres, popular_tags, game_details, languages)
+
         return game
     return game[0]

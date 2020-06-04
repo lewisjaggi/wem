@@ -18,14 +18,11 @@ initialize_db(app)
 
 @app.route('/')
 def index():
-    genres = [genre for genre in Genre.objects() if genre.count > 10]
-    genres = sorted(genres, key=lambda genre: genre.name)
-    tags = [tag for tag in Tag.objects() if tag.count > 10]
-    tags = sorted(tags, key=lambda tag: tag.name)
-    game_details = [game_detail for game_detail in GameDetail.objects() if game_detail.count > 10]
-    game_details = sorted(game_details, key=lambda game_detail: game_detail.name)
+    genres = Genre.objects().order_by('name')
+    tags = Tag.objects().order_by('name')
+    game_details = GameDetail.objects().order_by('name')
     languages = Language.objects().order_by('name')
-    print(languages)
+
     return render_template('index.html', genres=genres, tags=tags, game_details=game_details, languages=languages)
 
 
@@ -60,8 +57,11 @@ def results():
 
         print("Generate searching game")
         searching_game = SearchingGame()
+        genres = json.dumps(dict((genre, [0]) for genre in genres))
         searching_game.genres = genres
+        tags = json.dumps(dict((tag, [0]) for tag in tags))
         searching_game.popular_tags = tags
+        game_details = json.dumps(dict((game_detail, [0]) for game_detail in game_details))
         searching_game.game_details = game_details
 
         print("Load user games")
@@ -103,7 +103,9 @@ def results():
 
         print("Return first result")
         prediction = [Game.objects().get(steam_id=similar[0]) for similar in similarities]
-        return render_template('results.html', games=prediction[:10])
+        return render_template('results.html', games=prediction[:10],
+                               genres=dict((game.steam_id,json.loads(game.genres)) for game in prediction[:10])
+                               )
     # the code below is executed if the request method
     # was GET or the credentials were invalid
 

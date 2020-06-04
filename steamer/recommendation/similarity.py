@@ -5,8 +5,6 @@
 import numpy as np
 import json
 import re
-from steamer.database.caracteristics import validated_genres, validated_tags, validated_game_details
-from sklearn.metrics.pairwise import cosine_similarity
 
 
 def calculate_score(game, numberVote):
@@ -23,57 +21,59 @@ def calculate_score(game, numberVote):
 
 def calculate_tfidf(game, total_games, genres, tags, game_details):
     game_tfidf = []
-
-    validated_genres_count = dict((validated_genre, [0, 0]) for validated_genre in validated_genres)
-    total_genres = len(game.genres)
-    for genre in game.genres:
-        for validated_genre in validated_genres:
-            if validated_genre in genre:
-                validated_genres_count[validated_genre][0] += 1 - game.genres.index(genre) / total_genres
-                validated_genres_count[validated_genre][1] += 1
-
-    validated_tags_count = dict((validated_tag, [0, 0]) for validated_tag in validated_tags)
-    total_tags = len(game.popular_tags)
-    for tag in game.popular_tags:
-        for validated_tag in validated_tags:
-            if validated_tag in tag:
-                validated_tags_count[validated_tag][0] += 1 - game.popular_tags.index(tag) / total_tags
-                validated_tags_count[validated_tag][1] += 1
-
-    validated_game_details_count = dict((validated_game_detail, [0, 0]) for validated_game_detail in validated_game_details)
-    total_game_details = len(game.game_details)
-    for game_detail in game.game_details:
-        for validated_game_detail in validated_game_details:
-            if validated_game_detail in game_detail:
-                validated_game_details_count[validated_game_detail][0] += 1 - game.game_details.index(game_detail) / total_game_details
-                validated_game_details_count[validated_game_detail][1] += 1
+    game_genres = json.loads(game.genres)
+    total_game_genres = 0
+    for name, indexes in game_genres.items():
+        total_game_genres += len(indexes)
 
     for genre in genres.order_by('name'):
         tfidf = 1.0
-        if genre.count > 0:
-            validated_genre_count = validated_genres_count[genre.name]
-            ranking = validated_genre_count[0]
-            count = validated_genre_count[1]
+        if genre.count > 0 and genre.name in game_genres:
+            indexes = game_genres[genre.name]
+            count = len(indexes)
+
+            ranking = 0.0
+            for index in indexes:
+                ranking += 1 - index / total_game_genres
+
             tfidf += count * np.log(total_games / genre.count) * ranking
-            game_tfidf.append(tfidf)
+        game_tfidf.append(tfidf)
+
+    game_tags = json.loads(game.popular_tags)
+    total_game_tags = 0
+    for name, indexes in game_tags.items():
+        total_game_tags += len(indexes)
 
     for tag in tags.order_by('name'):
         tfidf = 1.0
-        if tag.count > 0:
-            validated_tag_count = validated_tags_count[tag.name]
-            ranking = validated_tag_count[0]
-            count = validated_tag_count[1]
+        if tag.count > 0 and tag.name in game_tags:
+            indexes = game_tags[tag.name]
+            count = len(indexes)
+
+            ranking = 0.0
+            for index in indexes:
+                ranking += 1 - index / total_game_tags
+
             tfidf += count * np.log(total_games / tag.count) * ranking
-            game_tfidf.append(tfidf)
+        game_tfidf.append(tfidf)
+
+    game_game_details = json.loads(game.game_details)
+    total_game_game_details = 0
+    for name, indexes in game_game_details.items():
+        total_game_game_details += len(indexes)
 
     for game_detail in game_details.order_by('name'):
         tfidf = 1.0
-        if game_detail.count > 0:
-            validated_game_detail_count = validated_game_details_count[game_detail.name]
-            ranking = validated_game_detail_count[0]
-            count = validated_game_detail_count[1]
+        if game_detail.count > 0 and game_detail.name in game_game_details:
+            indexes = game_game_details[game_detail.name]
+            count = len(indexes)
+
+            ranking = 0.0
+            for index in indexes:
+                ranking += 1 - index / total_game_game_details
+
             tfidf += count * np.log(total_games / game_detail.count) * ranking
-            game_tfidf.append(tfidf)
+        game_tfidf.append(tfidf)
 
     return np.asarray(game_tfidf)
 
@@ -106,32 +106,29 @@ def calculate_similarities(current_game, user_games, games, genres, tags, game_d
 
 
 def calculate_library(games, genres, tags, game_details):
-    count_genres = dict((genre.name, 0.0) for genre in genres.order_by('name') if genre.count > 10)
-    count_tags = dict((tag.name, 0.0) for tag in tags.order_by('name') if tag.count > 10)
-    count_games_details = dict((game_detail.name, 0.0) for game_detail in game_details.order_by('name') if game_detail.count > 10)
+    count_genres = dict((genre.name, 0) for genre in genres.order_by('name'))
+    count_tags = dict((tag.name, 0) for tag in tags.order_by('name'))
+    count_games_details = dict((game_detail.name, 0) for game_detail in game_details.order_by('name'))
 
-    total_genre = 0.0
-    total_tag = 0.0
-    total_game_detail = 0.0
+    total_genre = 0
+    total_tag = 0
+    total_game_detail = 0
 
     for game in games:
-        for genre in game.genres:
-            for validated_genre in validated_genres:
-                if validated_genre in genre:
-                    count_genres[validated_genre] += 1
-                    total_genre += 1
+        for name, indexes in json.loads(game.genres).items():
+            count = len(indexes)
+            count_genres[name] += count
+            total_genre += count
 
-        for tag in game.popular_tags:
-            for validated_tag in validated_tags:
-                if validated_tag in tag:
-                    count_tags[validated_tag] += 1
-                    total_tag += 1
+        for name, indexes in json.loads(game.popular_tags).items():
+            count = len(indexes)
+            count_tags[name] += count
+            total_tag += count
 
-        for game_detail in game.game_details:
-            for validated_game_detail in validated_game_details:
-                if validated_game_detail in game_detail:
-                    count_games_details[validated_game_detail] += 1
-                    total_game_detail += 1
+        for name, indexes in json.loads(game.game_details).items():
+            count = len(indexes)
+            count_games_details[name] += count
+            total_game_detail += count
 
     vector = []
     for key, value in count_genres.items():
