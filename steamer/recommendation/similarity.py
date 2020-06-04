@@ -78,7 +78,7 @@ def calculate_tfidf(game, total_games, genres, tags, game_details):
     return np.asarray(game_tfidf)
 
 
-def calculate_similarities(current_game, user_games, games, genres, tags, game_details, tfidf_games):
+def calculate_similarities(current_game, user_games, games, common_caracteristics_score, genres, tags, game_details, tfidf_games):
     tfidf_current_game = calculate_tfidf(current_game, len(games), genres, tags, game_details)
 
     games_similarity = {}
@@ -100,7 +100,7 @@ def calculate_similarities(current_game, user_games, games, genres, tags, game_d
 
             score = game[0].score + 1
 
-            games_similarity[tfidf_game.steam_id] = cosinus_similarity * score
+            games_similarity[tfidf_game.steam_id] = cosinus_similarity * score * common_caracteristics_score[tfidf_game.steam_id]
 
     return games_similarity
 
