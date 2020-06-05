@@ -133,10 +133,11 @@ def clean_list(list):
 
 
 def clean_price(price):
-    price = price.replace('$', '').strip()
-    if price == "NaN" or price == '':
+    price = price.replace('$', '').strip().lower()
+    try:
+        return float(price)
+    except (ValueError, Exception):
         return 0.0
-    return float(price)
 
 
 def populate_db():
