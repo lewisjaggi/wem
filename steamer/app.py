@@ -48,6 +48,7 @@ def results():
 
         total_games = len(Game.objects())
 
+        print([json.loads(game.genres) for game in Game.objects if game.name == "3DMark"][0])
         print("Parse request")
         genres = request.form.getlist('Genres[]')
         tags = request.form.getlist('Tags[]')
@@ -120,10 +121,10 @@ def results():
             print("Sort prediction")
             similarities = sorted(similarities.items(), key=lambda item: item[1], reverse=True)
 
-            print("Return first result")
+            print("Return first results")
             prediction = [Game.objects().get(steam_id=similar[0]) for similar in similarities]
             return render_template('results.html', games=prediction[:10],
-                               genres=dict((game.steam_id, json.loads(game.genres)) for game in prediction[:10])
+                               genres=dict((game.steam_id, [genre for genre, indexes in json.loads(game.genres).items() if len(indexes) > 0]) for game in prediction[:10])
                                )
         return render_template('results.html', games=[], genres=[])
     # the code below is executed if the request method
