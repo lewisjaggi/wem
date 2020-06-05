@@ -132,7 +132,7 @@ def calculate_library(games, genres, tags, game_details):
 
     vector = []
     for key, value in count_genres.items():
-        vector.append(float(value / total_tag + 1))
+        vector.append(float(value / total_genre + 1))
 
     for key, value in count_tags.items():
         vector.append((value / total_tag + 1))

@@ -134,7 +134,7 @@ def clean_list(list):
 
 def clean_price(price):
     price = price.replace('$', '').strip()
-    if price != "NaN" or price != '':
+    if price == "NaN" or price == '':
         return 0.0
     return float(price)
 
