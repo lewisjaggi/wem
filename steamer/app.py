@@ -46,16 +46,15 @@ def results():
     error = None
     if request.method == 'POST':
 
-        total_games = len(Game.objects())
+        total_games = Game.objects().count()
 
-        print([json.loads(game.genres) for game in Game.objects if game.name == "3DMark"][0])
         print("Parse request")
         genres = request.form.getlist('Genres[]')
         tags = request.form.getlist('Tags[]')
         game_details = request.form.getlist('GameDetails[]')
         filter_price = request.form.getlist('filter_price')[0].split(',')
         filter_reviews = request.form.get('filter_reviews')
-        filter_languages = request.form.get('filter_languages[]')
+        filter_languages = request.form.getlist('filter_languages[]')
 
         if len(genres) > 0 or len(tags) > 0 or len(game_details) > 0:
             print("Generate searching game")
@@ -69,7 +68,7 @@ def results():
                           json.loads(get_games_by_user(76561197992131568))["response"]["games"]]
             user_games = [user_game for user_game in user_games if user_game is not None]
 
-            if len(Game.objects()) != total_games:
+            if Game.objects().count() != total_games:
                 print("Update tfidf")
                 update_tfidf()
 

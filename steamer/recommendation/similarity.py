@@ -91,7 +91,7 @@ def calculate_similarities(current_game, user_games, games, common_caracteristic
             library_tfidf = calculate_library(user_games, genres, tags, game_details)
 
             cosinus_similarity = np.dot(tfidf, tfidf_current_game) / (
-                    np.sqrt(np.dot(tfidf,tfidf)) * (np.sqrt(np.dot(tfidf_current_game, tfidf_current_game))))
+                    np.sqrt(np.dot(tfidf, tfidf)) * (np.sqrt(np.dot(tfidf_current_game, tfidf_current_game))))
 
             library_score = np.dot(tfidf, library_tfidf) / (
                     np.sqrt(np.dot(tfidf, tfidf)) * (np.sqrt(np.dot(library_tfidf, library_tfidf))))
