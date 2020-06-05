@@ -1,3 +1,7 @@
+form {
+	margin: 50px;
+}
+
 #reviews .slider-selection, .slider-selection {
 	background: red !important;
 }
