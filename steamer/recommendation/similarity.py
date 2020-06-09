@@ -5,7 +5,8 @@
 import numpy as np
 import json
 import re
-
+from steamer.steam.user import get_friends_by_user, get_games_by_user
+import scipy.stats as st
 
 def calculate_score(game, numberVote):
     reviews = json.loads(game.reviews)
@@ -78,7 +79,8 @@ def calculate_tfidf(game, total_games, genres, tags, game_details):
     return np.asarray(game_tfidf)
 
 
-def calculate_similarities(current_game, user_games, games, common_caracteristics_score, genres, tags, game_details, tfidf_games):
+def calculate_similarities(library_tfidf, pearson_friends, current_game, user_games, games, common_caracteristics_score, genres, tags,
+                           game_details, tfidf_games):
     tfidf_current_game = calculate_tfidf(current_game, len(games), genres, tags, game_details)
 
     games_similarity = {}
@@ -88,19 +90,18 @@ def calculate_similarities(current_game, user_games, games, common_caracteristic
         if len(game) > 0:
             tfidf = np.asarray(tfidf_game.tfidf)
 
-            library_tfidf = calculate_library(user_games, genres, tags, game_details)
-
             cosinus_similarity = np.dot(tfidf, tfidf_current_game) / (
                     np.sqrt(np.dot(tfidf, tfidf)) * (np.sqrt(np.dot(tfidf_current_game, tfidf_current_game))))
 
             library_score = np.dot(tfidf, library_tfidf) / (
                     np.sqrt(np.dot(tfidf, tfidf)) * (np.sqrt(np.dot(library_tfidf, library_tfidf))))
 
-            cosinus_similarity = cosinus_similarity * library_score
+            score_friends = calculate_friends_game_score(pearson_friends, tfidf_game.steam_id)
 
             score = game[0].score + 1
 
-            games_similarity[tfidf_game.steam_id] = cosinus_similarity * score * common_caracteristics_score[tfidf_game.steam_id]
+            games_similarity[tfidf_game.steam_id] = cosinus_similarity * library_score * score_friends * score * \
+                                                    common_caracteristics_score[tfidf_game.steam_id]
 
     return games_similarity
 
@@ -132,12 +133,45 @@ def calculate_library(games, genres, tags, game_details):
 
     vector = []
     for key, value in count_genres.items():
-        vector.append(float(value / total_genre + 1))
+        if total_genre > 0:
+            vector.append(float(value / total_genre + 1))
+        else:
+            vector.append(1.0)
 
     for key, value in count_tags.items():
-        vector.append((value / total_tag + 1))
+        if total_tag > 0:
+            vector.append((value / total_tag + 1))
+        else:
+            vector.append(1.0)
 
     for key, value in count_games_details.items():
-        vector.append((value / total_game_detail + 1))
+        if total_game_detail > 0:
+            vector.append((value / total_game_detail + 1))
+        else:
+            vector.append(1.0)
 
     return np.asarray(vector)
+
+
+def calculate_friends_pearson(user_id, library_tfidf, games, genres, tags, game_details):
+    friends_steam_id = get_friends_by_user(user_id)
+    games_id_friends = [get_games_by_user(steam_id) for steam_id in friends_steam_id]
+
+    pearson_friends = {}
+    for games_id_friend in games_id_friends:
+        friend_games = [game for game in games if game.steam_id in games_id_friend]
+        library_tfidf_friends = calculate_library(friend_games, genres, tags, game_details)
+        pearson_friends[st.pearsonr(library_tfidf, library_tfidf_friends)] = games_id_friend
+
+    return pearson_friends
+
+
+def calculate_friends_game_score(pearson_friends, steam_id):
+    count_presence = 0
+    for pearson, games_id_friend in pearson_friends.items():
+        for game_id in games_id_friend:
+            if game_id == steam_id:
+                count_presence += pearson
+
+    score_friends = 1 + count_presence / len(pearson_friends)
+    return score_friends

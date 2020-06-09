@@ -1,4 +1,5 @@
 import requests
+import json
 
 API_KEY = '22F49C23A2F2EE53D628F6DB3228515E'
 
@@ -11,10 +12,16 @@ def get_games_by_user(user_id):
         'include_appinfo': 1
     }
     r = requests.get('http://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/', params=payload)
+
+
+    r = requests.get('http://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/', params=payload)
     if r.status_code == 200:
-        return r.text
-    else:
-        return r.text
+        text = r.text
+        text_json = json.loads(text)
+        if "games" in text_json["response"].keys():
+            return text_json["response"]["games"]
+
+    return []
 
 
 def get_friends_by_user(user_id):
@@ -24,4 +31,7 @@ def get_friends_by_user(user_id):
         'format': 'json',
         'relationship': 'friend'
     }
-    return requests.get('http://api.steampowered.com/ISteamUser/GetFriendList/v0001/', params=payload)
+    resp = requests.get('http://api.steampowered.com/ISteamUser/GetFriendList/v0001/', params=payload)
+    users_list = resp.json()["friendslist"]["friends"]
+    return [user["steamid"] for user in users_list]
+
