@@ -45,9 +45,11 @@ def get_game(name):
 def results():
     error = None
     if request.method == 'POST':
+
         genres = request.form.getlist('Genres[]')
         tags = request.form.getlist('Tags[]')
         game_details = request.form.getlist('GameDetails[]')
+        #algo
 
         searching_game = SearchingGame()
         searching_game.genres = genres
@@ -66,12 +68,11 @@ def results():
 
         similarities = sorted(similarities.items(), key=lambda item: item[1], reverse=True)
 
-        prediction = [Game.objects().get(steam_id=similar[0]).name for similar in similarities]
-        return json.dumps(prediction)
-        return render_template('results.html')
+        prediction = [Game.objects().get(steam_id=similar[0]) for similar in similarities]
+        return render_template('results.html',games = prediction[:10])
+
     # the code below is executed if the request method
     # was GET or the credentials were invalid
-    return render_template('index.html')
 
 
 @app.route('/users/<steam_id>/games')

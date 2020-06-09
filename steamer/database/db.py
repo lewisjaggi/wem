@@ -49,6 +49,10 @@ class Game(db.Document):
     discount_price = db.StringField()
     score = db.FloatField()
 
+    @classmethod
+    def get_by_id(cls,id):
+        return cls.objects(steam_id=id)
+
 
 class Genre(db.Document):
     name = db.StringField(required=True, unique=True)
