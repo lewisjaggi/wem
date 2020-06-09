@@ -1,3 +1,4 @@
+antiorm==1.2.1
 appnope==0.1.0
 astroid==2.3.3
 attrs==19.3.0
@@ -8,6 +9,7 @@ certifi==2020.4.5.1
 chardet==3.0.4
 click==7.1.2
 cycler==0.10.0
+db==0.1.1
 decorator==4.4.2
 defusedxml==0.6.0
 demjson==2.2.4
@@ -65,6 +67,7 @@ pyzmq==19.0.1
 qtconsole==4.7.3
 QtPy==1.9.0
 requests==2.23.0
+scipy==1.4.1
 Send2Trash==1.5.0
 six==1.14.0
 soupsieve==2.0

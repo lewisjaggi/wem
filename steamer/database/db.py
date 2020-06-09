@@ -3,6 +3,7 @@
 
 import os
 import sys
+
 sys.path.append(os.path.join(os.path.dirname(__file__), '../../'))
 from steamer.recommendation.similarity import calculate_tfidf, calculate_score
 import mongoengine as me
@@ -12,6 +13,7 @@ import pathlib
 import json
 import re
 import math
+from steamer.database.caracteristics import validated_genres, validated_tags, validated_game_details
 
 db = MongoEngine()
 
@@ -37,20 +39,20 @@ class Game(db.Document):
     reviews = db.StringField()
     release_date = db.StringField()
     developer = db.StringField()
-    popular_tags = db.ListField()
-    game_details = db.ListField()
+    popular_tags = db.StringField()
+    game_details = db.StringField()
     languages = db.ListField()
-    genres = db.ListField()
+    genres = db.StringField()
     game_description = db.StringField()
     mature_content = db.StringField()
     minimum_requirements = db.StringField()
     recommended_requirements = db.StringField()
-    original_price = db.StringField()
-    discount_price = db.StringField()
+    original_price = db.FloatField()
+    discount_price = db.FloatField()
     score = db.FloatField()
 
     @classmethod
-    def get_by_id(cls,id):
+    def get_by_id(cls, id):
         return cls.objects(steam_id=id)
 
 
@@ -77,6 +79,11 @@ class TfidfGame(db.Document):
 class NumberVote(db.Document):
     min = db.IntField(required=True)
     max = db.IntField(required=True)
+
+
+class Language(db.Document):
+    name = db.StringField(required=True, unique=True)
+
 
 def connect_db():
     # Connect using MongoEngine
@@ -125,6 +132,14 @@ def clean_list(list):
     return list
 
 
+def clean_price(price):
+    price = price.replace('$', '').strip().lower()
+    try:
+        return float(price)
+    except (ValueError, Exception):
+        return 0.0
+
+
 def populate_db():
     print("")
     print("The process will take several minutes")
@@ -138,12 +153,12 @@ def populate_db():
     is_header = True
     print("Start importing games")
 
-    table_genres = {}
-    table_tags = {}
-    table_games_details = {}
+    table_genres = dict((validated_genre, 0) for validated_genre in validated_genres)
+    table_tags = dict((validated_tag, 0) for validated_tag in validated_tags)
+    table_game_details = dict((validated_game_detail, 0) for validated_game_detail in validated_game_details)
     max_vote = 0
     min_vote = math.inf
-
+    table_languages = []
 
     with open(str(pathlib.Path(__file__).parent.absolute()) + '/steam_games.csv', newline='',
               encoding="utf8") as csvfile:
@@ -189,7 +204,7 @@ def populate_db():
 
                 current_vote = 0
 
-                if number_reviews.replace(',','').isdigit():
+                if number_reviews.replace(',', '').isdigit():
                     current_vote = int(number_reviews.replace(',', ''))
 
                 max_vote = current_vote if current_vote > max_vote else max_vote
@@ -217,15 +232,15 @@ def populate_db():
 
                 publisher = row[8] if row[8] != "NaN" else ""
 
-                popular_tags = clean_list(row[9].split(','))
-
-                game_details = clean_list(row[10].split(','))
+                popular_tags = valid_caracteristic(clean_list(row[9].split(',')), validated_tags)
+                game_details = valid_caracteristic(clean_list(row[10].split(',')), validated_game_details)
 
                 languages = clean_list(row[11].split(','))
+                languages = [language for language in languages if language.isalpha()]
 
                 achievements = row[12] if row[12] != "NaN" else ""
 
-                genres = clean_list(row[13].split(','))
+                genres = valid_caracteristic(clean_list(row[13].split(',')), validated_genres)
 
                 game_description = row[14] if row[14] != "NaN" else ""
 
@@ -235,9 +250,9 @@ def populate_db():
 
                 recommended_requirements = format_requirement(row[17].split(","))
 
-                original_price = row[18] if row[18] != "NaN" else ""
+                original_price = clean_price(row[18])
 
-                discount_price = row[19] if row[19] != "NaN" else ""
+                discount_price = clean_price(row[19])
 
                 try:
                     game = Game(
@@ -248,10 +263,10 @@ def populate_db():
                         reviews=json.dumps(reviews),
                         release_date=release_date,
                         developer=developer,
-                        popular_tags=popular_tags,
-                        game_details=game_details,
+                        popular_tags=json.dumps(popular_tags),
+                        game_details=json.dumps(game_details),
                         languages=languages,
-                        genres=genres,
+                        genres=json.dumps(genres),
                         game_description=game_description,
                         mature_content=mature_content,
                         minimum_requirements=json.dumps(minimum_requirements),
@@ -260,26 +275,21 @@ def populate_db():
                         discount_price=discount_price,
                         score=0
                     ).save()
+
+                    for name, indexes in genres.items():
+                        table_genres[name] += len(indexes)
+
+                    for name, indexes in popular_tags.items():
+                        table_tags[name] += len(indexes)
+
+                    for name, indexes in game_details.items():
+                        table_game_details[name] += len(indexes)
+
+                    for language in languages:
+                        if language not in table_languages:
+                            table_languages.append(language)
                 except:
                     print("The id : " + steam_id + " is duplicated")
-
-                for genre in genres:
-                    if genre not in table_genres.keys():
-                        table_genres[genre] = 1
-                    else:
-                        table_genres[genre] += 1
-
-                for tag in popular_tags:
-                    if tag not in table_tags.keys():
-                        table_tags[tag] = 1
-                    else:
-                        table_tags[tag] += 1
-
-                for detail in game_details:
-                    if detail not in table_games_details.keys():
-                        table_games_details[detail] = 1
-                    else:
-                        table_games_details[detail] += 1
 
     print("Games imported")
     print("Start importing genres")
@@ -293,15 +303,22 @@ def populate_db():
 
     print("Popular tags imported")
     print("Start importing game details")
-    for name, count in table_games_details.items():
+    for name, count in table_game_details.items():
         GameDetail(name=name, count=count).save()
     print("Game details imported")
+
+    print("Start importing languages")
+    for language in table_languages:
+        Language(name=language).save()
+    print("Languages imported")
+
     print("Start calculation tfidf")
-    total_games = len(Game.objects())
+    total_games = Game.objects().count()
     genres = Genre.objects()
     tags = Tag.objects()
     game_details = GameDetail.objects()
-    tfidf_games = {game.steam_id: calculate_tfidf(game, total_games, genres, tags, game_details) for game in Game.objects()}
+    tfidf_games = {game.steam_id: calculate_tfidf(game, total_games, genres, tags, game_details) for game in
+                   Game.objects()}
 
     for steam_id, tfidf in tfidf_games.items():
         TfidfGame(
@@ -317,6 +334,50 @@ def populate_db():
     print("Scores calculated")
     print("Database Ready")
     print("")
+
+
+def update_caracteristics(genres, tags, game_details, languages):
+    for name, indexes in genres.items():
+        genre = Genre.objects(name=name)[0]
+        genre.update(count=genre.count + len(indexes))
+
+    for name, indexes in tags.items():
+        tag = Tag.objects(name=name)[0]
+        tag.update(count=tag.count + len(indexes))
+
+    for name, indexes in game_details.items():
+        game_detail = GameDetail.objects(name=name)[0]
+        game_detail.update(count=game_detail.count + len(indexes))
+
+    for language in languages:
+        db_language = Language.objects(name=language)
+        if len(db_language) == 0:
+            Language(name=language).save()
+
+
+def update_tfidf():
+    all_games = Game.objects()
+
+    for game in all_games:
+        tfidf = TfidfGame.objects(steam_id=game.steam_id)
+        if len(tfidf) == 0:
+            TfidfGame(steam_id=game.steam_id, tfidf=calculate_tfidf(game, len(all_games), Genre.objects(),
+                                                                    Tag.objects(), GameDetail.objects())).save()
+        else:
+            tfidf[0].update(
+                tfidf=calculate_tfidf(game, len(all_games), Genre.objects(),
+                                      Tag.objects(), GameDetail.objects()))
+
+
+def valid_caracteristic(caracteristics, validated_caracteristics):
+    caracteristics_valided = dict((validated_caracteristic, []) for validated_caracteristic in validated_caracteristics)
+
+    for caracteristic in caracteristics:
+        for validated_caracteristic in validated_caracteristics:
+            if validated_caracteristic in caracteristic:
+                caracteristics_valided[validated_caracteristic].append(caracteristics.index(caracteristic))
+
+    return caracteristics_valided
 
 
 if __name__ == "__main__":

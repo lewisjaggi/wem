@@ -7,29 +7,44 @@
     <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">
     <link rel="stylesheet" type="text/css" href="css/prettify.min.css">
     <link rel="stylesheet" type="text/css" href="css/bootstrap-duallistbox.css">
+    <link rel="stylesheet" type="text/css"
+          href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-slider/10.6.2/css/bootstrap-slider.min.css">
+    <link rel="stylesheet" type="text/css" href="css/main.css">
     <script src="js/jquery-3.2.1.slim.min.js"></script>
     <script src="js/popper.min.js"></script>
     <script src="js/bootstrap.min.js"></script>
     <script src="js/run_prettify.js"></script>
     <script src="js/jquery.bootstrap-duallistbox.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-slider/10.6.2/bootstrap-slider.min.js"></script>
 </head>
 <body>
-    <title>Hello from Flask</title>
-    <form method="post" action="/results">
-        <h2>Steam Web API Key</h2>
-        <div>
-            <input type="text" name="steamAPI" id ="steamAPI" />
-        </div>
+<title>Hello from Flask</title>
+<form method="post" action="/results">
+    <h2>Steam User ID (76561197992131568)</h2>
+    <div>
+        <input type="text" name="steamUserID" id="steamUserID" />
+        <a href="./img/FindUserSteamId.png">Where to find</a>
+    </div>
+    <div>
+        <b>0 % </b><input name="filter_reviews" id="reviews" type="text" value="" data-slider-min="0"
+                          data-slider-max="100" data-slider-step="1" data-slider-value="80"/><b> 100 %</b>
+    </div>
+    <div>
+        <b>0 CHF </b><input name="filter_price" id="price" type="text" value="" data-slider-min="0"
+                            data-slider-max="150" data-slider-step="1" data-slider-value="[0,100]"/><b> 150 CHF</b>
+    </div>
+    <div>
         <div style="display: inline">
-            <h2>Genres</h2>
+            <h2>Languages</h2>
             <div class="col-md-7">
-                <select multiple="multiple" size="10" name="Genres[]" class="slt_genres" title="Select genres">
-                    {%  for genre in genres %}
-                        <option value="{{ genre.name }}">{{ genre.name }}</option>
+                <select multiple="multiple" size="10" class="slt_language" name="filter_languages[]"
+                        title="Select languages">
+                    {% for language in languages %}
+                        <option value="{{ language.name }}">{{ language.name }}</option>
                     {% endfor %}
                 </select>
                 <script>
-                    var sltGenres = $('.slt_genres').bootstrapDualListbox({
+                    var sltGenres = $('.slt_language').bootstrapDualListbox({
                         nonSelectedListLabel: 'Non-selected',
                         selectedListLabel: 'Selected',
                         preserveSelectionOnMove: 'moved',
@@ -37,47 +52,79 @@
                     });
                 </script>
             </div>
-        </div>
 
-        <div style="display: inline">
-            <h2>Tags</h2>
-            <div class="col-md-7">
-                <select multiple="multiple" size="10" name="Tags[]" class="slt_tags" title="Select genres">
-                    {%  for tag in tags %}
-                        <option value="{{ tag.name }}">{{ tag.name }}</option>
-                    {% endfor %}
-                </select>
-                <script>
-                    var sltTags = $('.slt_tags').bootstrapDualListbox({
-                        nonSelectedListLabel: 'Non-selected',
-                        selectedListLabel: 'Selected',
-                        preserveSelectionOnMove: 'moved',
-                        moveOnSelect: false
-                    });
-                </script>
-            </div>
         </div>
-
-        <div style="display: inline">
-            <h2>Game Details</h2>
-            <div class="col-md-7">
-                <select multiple="multiple" size="10" name="GameDetails[]" class="slt_game_details" title="Select genres">
-                    {%  for game_detail in game_details %}
-                        <option value="{{ game_detail.name }}">{{ game_detail.name }}</option>
-                    {% endfor %}
-                </select>
-                <script>
-                    var sltGameDtails = $('.slt_game_details').bootstrapDualListbox({
-                        nonSelectedListLabel: 'Non-selected',
-                        selectedListLabel: 'Selected',
-                        preserveSelectionOnMove: 'moved',
-                        moveOnSelect: false
-                    });
-                </script>
-            </div>
+        <script>
+            $('#reviews').slider({
+                formatter: function (value) {
+                    return value;
+                }
+            });
+            $('#price').slider({
+                formatter: function (value) {
+                    return value;
+                }
+            });
+        </script>
+    </div>
+    <div style="display: inline">
+        <h2>Genres</h2>
+        <div class="col-md-7">
+            <select multiple="multiple" size="10" name="Genres[]" class="slt_genres" title="Select genres">
+                {% for genre in genres %}
+                    <option value="{{ genre.name }}">{{ genre.name }}</option>
+                {% endfor %}
+            </select>
+            <script>
+                var sltGenres = $('.slt_genres').bootstrapDualListbox({
+                    nonSelectedListLabel: 'Non-selected',
+                    selectedListLabel: 'Selected',
+                    preserveSelectionOnMove: 'moved',
+                    moveOnSelect: false
+                });
+            </script>
         </div>
+    </div>
 
-        <input type="submit" value="results">
-    </form>
+    <div style="display: inline">
+        <h2>Tags</h2>
+        <div class="col-md-7">
+            <select multiple="multiple" size="10" name="Tags[]" class="slt_tags" title="Select genres">
+                {% for tag in tags %}
+                    <option value="{{ tag.name }}">{{ tag.name }}</option>
+                {% endfor %}
+            </select>
+            <script>
+                var sltTags = $('.slt_tags').bootstrapDualListbox({
+                    nonSelectedListLabel: 'Non-selected',
+                    selectedListLabel: 'Selected',
+                    preserveSelectionOnMove: 'moved',
+                    moveOnSelect: false
+                });
+            </script>
+        </div>
+    </div>
+
+    <div style="display: inline">
+        <h2>Game Details</h2>
+        <div class="col-md-7">
+            <select multiple="multiple" size="10" name="GameDetails[]" class="slt_game_details" title="Select genres">
+                {% for game_detail in game_details %}
+                    <option value="{{ game_detail.name }}">{{ game_detail.name }}</option>
+                {% endfor %}
+            </select>
+            <script>
+                var sltGameDtails = $('.slt_game_details').bootstrapDualListbox({
+                    nonSelectedListLabel: 'Non-selected',
+                    selectedListLabel: 'Selected',
+                    preserveSelectionOnMove: 'moved',
+                    moveOnSelect: false
+                });
+            </script>
+        </div>
+    </div>
+
+    <input type="submit" value="results">
+</form>
 </body>
 </html>
