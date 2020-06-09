@@ -313,7 +313,7 @@ def populate_db():
     print("Languages imported")
 
     print("Start calculation tfidf")
-    total_games = len(Game.objects())
+    total_games = Game.objects().count()
     genres = Genre.objects()
     tags = Tag.objects()
     game_details = GameDetail.objects()

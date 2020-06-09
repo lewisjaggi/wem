@@ -55,6 +55,7 @@ def results():
         filter_price = request.form.getlist('filter_price')[0].split(',')
         filter_reviews = request.form.get('filter_reviews')
         filter_languages = request.form.getlist('filter_languages[]')
+        steam_user_id = request.form.get('steamUserID').strip()
 
         if len(genres) > 0 or len(tags) > 0 or len(game_details) > 0:
             print("Generate searching game")
@@ -63,14 +64,16 @@ def results():
             searching_game.popular_tags = json.dumps(dict((tag, [0]) for tag in tags))
             searching_game.game_details = json.dumps(dict((game_detail, [0]) for game_detail in game_details))
 
-            print("Load user games")
-            user_games = [get_game_details_by_id(user_game["appid"]) for user_game in
-                          json.loads(get_games_by_user(76561197992131568))["response"]["games"]]
-            user_games = [user_game for user_game in user_games if user_game is not None]
+            user_games = []
+            if steam_user_id != '':
+                print("Load user games")
+                user_games = [get_game_details_by_id(user_game["appid"]) for user_game in
+                              json.loads(get_games_by_user(steam_user_id))["response"]["games"]]
+                user_games = [user_game for user_game in user_games if user_game is not None]
 
-            if Game.objects().count() != total_games:
-                print("Update tfidf")
-                update_tfidf()
+                if Game.objects().count() != total_games:
+                    print("Update tfidf")
+                    update_tfidf()
 
             print("Filter games")
             games = Game.objects()
@@ -82,7 +85,7 @@ def results():
                     if percentage != "":
                         if float(percentage) >= float(filter_reviews):
                             language_filtred = True
-                            if filter_languages is not None:
+                            if len(filter_languages) != 0:
                                 language_filtred = False
                                 for language in filter_languages:
                                     if language in game.languages:
