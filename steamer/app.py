@@ -5,10 +5,11 @@ from flask import Flask, render_template, request, Response
 from steamer.database.db import initialize_db, Game, Genre, Tag, GameDetail, TfidfGame, NumberVote, update_tfidf, \
     Language
 from steamer.steam.game import get_game_details_by_id
-from steamer.steam.user import get_games_by_user
-from steamer.recommendation.similarity import calculate_similarities, calculate_score
+from steamer.steam.user import get_games_by_user, get_friends_by_user
+from steamer.recommendation.similarity import calculate_similarities, calculate_score, calculate_friends_pearson, calculate_library
 from steamer.recommendation.searchinggame import SearchingGame
 import json
+import timeit
 
 app = Flask(__name__, static_url_path='', static_folder='web/static', template_folder='web/templates')
 app.config['MONGODB_SETTINGS'] = {
@@ -55,6 +56,7 @@ def results():
         filter_price = request.form.getlist('filter_price')[0].split(',')
         filter_reviews = request.form.get('filter_reviews')
         filter_languages = request.form.getlist('filter_languages[]')
+        user_id = 76561197992131568
 
         if len(genres) > 0 or len(tags) > 0 or len(game_details) > 0:
             print("Generate searching game")
@@ -64,8 +66,7 @@ def results():
             searching_game.game_details = json.dumps(dict((game_detail, [0]) for game_detail in game_details))
 
             print("Load user games")
-            user_games = [get_game_details_by_id(user_game["appid"]) for user_game in
-                          json.loads(get_games_by_user(76561197992131568))["response"]["games"]]
+            user_games = [get_game_details_by_id(user_game["appid"]) for user_game in get_games_by_user(76561197992131568)]
             user_games = [user_game for user_game in user_games if user_game is not None]
 
             if Game.objects().count() != total_games:
@@ -108,13 +109,19 @@ def results():
                                 games_filtred.append(game)
                                 common_caracteristics_score[game.steam_id] = 1 + common / total_caracteriscics
 
-            print("Calculate similarities")
             genres = Genre.objects()
             tags = Tag.objects()
             game_details = GameDetail.objects()
             tfidf_games = TfidfGame.objects()
 
-            similarities = calculate_similarities(searching_game, user_games, games_filtred, common_caracteristics_score, genres, tags, game_details,
+            print("Calculate personal library")
+            library_tfidf = calculate_library(user_games, genres, tags, game_details)
+
+            print("Calculate friends correlation")
+            pearson_friends = calculate_friends_pearson(user_id, library_tfidf, games, genres, tags, game_details)
+
+            print("Calculate similarities")
+            similarities = calculate_similarities(library_tfidf, pearson_friends, searching_game, user_games, games_filtred, common_caracteristics_score, genres, tags, game_details,
                                                   tfidf_games)
 
             print("Sort prediction")
@@ -141,4 +148,9 @@ def get_user(steam_id):
 def get_game_by_id(game_id):
     r = get_game_details_by_id(game_id)
 
+    return Response(r, mimetype="application/json", status=200)
+
+@app.route('/users/friends')
+def get_friends_by_id():
+    r = json.dumps(get_games_by_user(76561197992131568))
     return Response(r, mimetype="application/json", status=200)
