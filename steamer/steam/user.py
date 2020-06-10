@@ -31,4 +31,3 @@ def get_friends_by_user(user_id):
     resp = requests.get('http://api.steampowered.com/ISteamUser/GetFriendList/v0001/', params=payload)
     users_list = resp.json()["friendslist"]["friends"]
     return [user["steamid"] for user in users_list]
-

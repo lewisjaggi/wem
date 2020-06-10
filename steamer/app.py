@@ -125,10 +125,11 @@ def results():
                 library_tfidf = calculate_library(user_games, genres, tags, game_details)
 
                 print("Calculate friends correlation")
-                pearson_friends = calculate_friends_pearson(steam_user_id, library_tfidf, games, genres, tags, game_details)
+                pearson_friends = calculate_friends_pearson(steam_user_id, library_tfidf, games, genres, tags,
+                                                            game_details)
 
             print("Calculate similarities")
-            similarities = calculate_similarities(library_tfidf, pearson_friends, searching_game, user_games,
+            similarities = calculate_similarities(library_tfidf, pearson_friends, searching_game,
                                                   games_filtred, common_caracteristics_score, genres, tags,
                                                   game_details,
                                                   tfidf_games)

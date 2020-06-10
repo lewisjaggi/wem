@@ -11,12 +11,12 @@ import scipy.stats as st
 import time
 
 
-def calculate_score(game, numberVote):
+def calculate_score(game, number_vote):
     reviews = json.loads(game.reviews)
     score = float(reviews["percentage"]) / 100 if reviews["percentage"] != '' else 0
     count = reviews["count"].replace(',', '')
-    current_vote = float(count) - numberVote.min if bool(re.search(r'\d', count)) else 0
-    max_vote = numberVote.max - numberVote.min
+    current_vote = float(count) - number_vote.min if bool(re.search(r'\d', count)) else 0
+    max_vote = number_vote.max - number_vote.min
 
     vote_ratio = current_vote / float(max_vote)
 
@@ -80,6 +80,8 @@ def calculate_tfidf(game, total_games, genres, tags, game_details):
         game_tfidf.append(tfidf)
 
     return np.asarray(game_tfidf)
+
+
 def init_process(games, tfidf_current_game, library_tfidf, pearson_friends, common_caracteristics_score):
     global games_process, tfidf_current_game_process, pearson_friends_process, common_caracteristics_score_process, library_tfidf_process
     games_process = games
@@ -95,7 +97,8 @@ def loop_tfidf(tfidf_game):
         tfidf = np.asarray(tfidf_game['tfidf'])
 
         cosinus_similarity = np.dot(tfidf, tfidf_current_game_process) / (
-                np.sqrt(np.dot(tfidf, tfidf)) * (np.sqrt(np.dot(tfidf_current_game_process, tfidf_current_game_process))))
+                np.sqrt(np.dot(tfidf, tfidf)) * (np.sqrt(np.dot(tfidf_current_game_process, tfidf_current_game_process))
+                                                 ))
 
         library_score = 1
         if len(library_tfidf_process) == len(tfidf):
@@ -108,12 +111,13 @@ def loop_tfidf(tfidf_game):
 
         score = game[0]['score'] + 1
 
-        return (tfidf_game['steam_id'],cosinus_similarity * library_score * score_friends * score * \
-                                                   common_caracteristics_score_process[tfidf_game['steam_id']])
+        return (tfidf_game['steam_id'], cosinus_similarity * library_score * score_friends * score *
+                common_caracteristics_score_process[tfidf_game['steam_id']])
     else:
-        return (-1,-1)
+        return -1, -1
 
-def calculate_similarities(library_tfidf, pearson_friends, current_game, user_games, games, common_caracteristics_score,
+
+def calculate_similarities(library_tfidf, pearson_friends, current_game, games, common_caracteristics_score,
                            genres, tags,
                            game_details, tfidf_games):
     tfidf_current_game = calculate_tfidf(current_game, len(games), genres, tags, game_details)
@@ -126,12 +130,12 @@ def calculate_similarities(library_tfidf, pearson_friends, current_game, user_ga
                                         common_caracteristics_score]) as pool:
 
         results = pool.imap_unordered(loop_tfidf, tfidf_games, 10000)
-        for id, tfidf in results:
-            if (id != -1):
-                games_similarity[id] = tfidf
+        for id_, tfidf in results:
+            if id_ != -1:
+                games_similarity[id_] = tfidf
 
     end = time.time()
-    print(end-start)
+    print(end - start)
     return games_similarity
 
 

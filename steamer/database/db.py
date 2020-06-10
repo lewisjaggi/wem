@@ -3,8 +3,6 @@
 
 import os
 import sys
-
-sys.path.append(os.path.join(os.path.dirname(__file__), '../../'))
 from steamer.recommendation.similarity import calculate_tfidf, calculate_score
 import mongoengine as me
 from flask_mongoengine import MongoEngine
@@ -15,6 +13,7 @@ import re
 import math
 from steamer.database.caracteristics import validated_genres, validated_tags, validated_game_details
 
+sys.path.append(os.path.join(os.path.dirname(__file__), '../../'))
 db = MongoEngine()
 
 
@@ -161,8 +160,8 @@ def populate_db():
     table_languages = []
 
     with open(str(pathlib.Path(__file__).parent.absolute()) + '/steam_games.csv', newline='',
-              encoding="utf8") as csvfile:
-        reader = csv.reader(csvfile, delimiter=",")
+              encoding="utf8") as csv_file:
+        reader = csv.reader(csv_file, delimiter=",")
 
         for row in reader:
             if is_header:
@@ -232,15 +231,15 @@ def populate_db():
 
                 publisher = row[8] if row[8] != "NaN" else ""
 
-                popular_tags = valid_caracteristic(clean_list(row[9].split(',')), validated_tags)
-                game_details = valid_caracteristic(clean_list(row[10].split(',')), validated_game_details)
+                popular_tags = valid_characteristics(clean_list(row[9].split(',')), validated_tags)
+                game_details = valid_characteristics(clean_list(row[10].split(',')), validated_game_details)
 
                 languages = clean_list(row[11].split(','))
                 languages = [language for language in languages if language.isalpha()]
 
                 achievements = row[12] if row[12] != "NaN" else ""
 
-                genres = valid_caracteristic(clean_list(row[13].split(',')), validated_genres)
+                genres = valid_characteristics(clean_list(row[13].split(',')), validated_genres)
 
                 game_description = row[14] if row[14] != "NaN" else ""
 
@@ -288,7 +287,7 @@ def populate_db():
                     for language in languages:
                         if language not in table_languages:
                             table_languages.append(language)
-                except:
+                except (ValueError, Exception):
                     print("The id : " + steam_id + " is duplicated")
 
     print("Games imported")
@@ -369,15 +368,16 @@ def update_tfidf():
                                       Tag.objects(), GameDetail.objects()))
 
 
-def valid_caracteristic(caracteristics, validated_caracteristics):
-    caracteristics_valided = dict((validated_caracteristic, []) for validated_caracteristic in validated_caracteristics)
+def valid_characteristics(characteristics, validated_characteristics):
+    characteristics_validated = dict((validated_characteristic, []) for validated_characteristic in
+                                     validated_characteristics)
 
-    for caracteristic in caracteristics:
-        for validated_caracteristic in validated_caracteristics:
-            if validated_caracteristic in caracteristic:
-                caracteristics_valided[validated_caracteristic].append(caracteristics.index(caracteristic))
+    for characteristic in characteristics:
+        for validated_characteristic in validated_characteristics:
+            if validated_characteristic in characteristic:
+                characteristics_validated[validated_characteristic].append(characteristics.index(characteristic))
 
-    return caracteristics_valided
+    return characteristics_validated
 
 
 if __name__ == "__main__":
