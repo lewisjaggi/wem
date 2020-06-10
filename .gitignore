@@ -164,3 +164,5 @@ htmlcov/
 .coverage.*
 *,cover
 __pycache__/
+
+steamer/database/testpool.py
