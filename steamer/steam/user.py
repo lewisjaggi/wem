@@ -12,9 +12,6 @@ def get_games_by_user(user_id):
         'include_appinfo': 1
     }
     r = requests.get('http://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/', params=payload)
-
-
-    r = requests.get('http://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/', params=payload)
     if r.status_code == 200:
         text = r.text
         text_json = json.loads(text)

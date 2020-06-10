@@ -8,6 +8,7 @@ import re
 from steamer.steam.user import get_friends_by_user, get_games_by_user
 import scipy.stats as st
 
+
 def calculate_score(game, numberVote):
     reviews = json.loads(game.reviews)
     score = float(reviews["percentage"]) / 100 if reviews["percentage"] != '' else 0
@@ -79,7 +80,8 @@ def calculate_tfidf(game, total_games, genres, tags, game_details):
     return np.asarray(game_tfidf)
 
 
-def calculate_similarities(library_tfidf, pearson_friends, current_game, user_games, games, common_caracteristics_score, genres, tags,
+def calculate_similarities(library_tfidf, pearson_friends, current_game, user_games, games, common_caracteristics_score,
+                           genres, tags,
                            game_details, tfidf_games):
     tfidf_current_game = calculate_tfidf(current_game, len(games), genres, tags, game_details)
 
@@ -101,7 +103,7 @@ def calculate_similarities(library_tfidf, pearson_friends, current_game, user_ga
             score = game[0]['score'] + 1
 
             games_similarity[tfidf_game['steam_id']] = cosinus_similarity * library_score * score_friends * score * \
-                                                    common_caracteristics_score[tfidf_game['steam_id']]
+                                                       common_caracteristics_score[tfidf_game['steam_id']]
 
     return games_similarity
 
@@ -116,17 +118,17 @@ def calculate_library(games, genres, tags, game_details):
     total_game_detail = 0
 
     for game in games:
-        for name, indexes in json.loads(game.genres).items():
+        for name, indexes in json.loads(game['genres']).items():
             count = len(indexes)
             count_genres[name] += count
             total_genre += count
 
-        for name, indexes in json.loads(game.popular_tags).items():
+        for name, indexes in json.loads(game['popular_tags']).items():
             count = len(indexes)
             count_tags[name] += count
             total_tag += count
 
-        for name, indexes in json.loads(game.game_details).items():
+        for name, indexes in json.loads(game['game_details']).items():
             count = len(indexes)
             count_games_details[name] += count
             total_game_detail += count
@@ -155,13 +157,14 @@ def calculate_library(games, genres, tags, game_details):
 
 def calculate_friends_pearson(user_id, library_tfidf, games, genres, tags, game_details):
     friends_steam_id = get_friends_by_user(user_id)
-    games_id_friends = [get_games_by_user(steam_id) for steam_id in friends_steam_id]
+    games_id_friends = [[app['appid'] for app in get_games_by_user(steam_id)] for steam_id in friends_steam_id]
 
     pearson_friends = {}
     for games_id_friend in games_id_friends:
-        friend_games = [game for game in games if game['steam_id'] in games_id_friend]
-        library_tfidf_friends = calculate_library(friend_games, genres, tags, game_details)
-        pearson_friends[st.pearsonr(library_tfidf, library_tfidf_friends)] = games_id_friend
+        if len(games_id_friend) > 0:
+            friend_games = [game for game in games if game['steam_id'] in games_id_friend]
+            library_tfidf_friends = calculate_library(friend_games, genres, tags, game_details)
+            pearson_friends[st.pearsonr(library_tfidf, library_tfidf_friends)[0]] = games_id_friend
 
     return pearson_friends
 
@@ -173,5 +176,6 @@ def calculate_friends_game_score(pearson_friends, steam_id):
             if game_id == steam_id:
                 count_presence += pearson
 
-    score_friends = 1 + count_presence / len(pearson_friends)
-    return score_friends
+    if len(pearson_friends) > 0:
+        return 1 + count_presence / len(pearson_friends)
+    return 1
