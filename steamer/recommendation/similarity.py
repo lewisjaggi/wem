@@ -7,7 +7,8 @@ import json
 import re
 from steamer.steam.user import get_friends_by_user, get_games_by_user
 import scipy.stats as st
-from multiprocessing import Pool
+import multiprocessing
+
 
 def calculate_score(game, numberVote):
     reviews = json.loads(game.reviews)
@@ -104,9 +105,9 @@ def loop_tfidf(tfidf_game):
         score_friends = calculate_friends_game_score(pearson_friends_process, tfidf_game.steam_id)
 
         score = game[0].score + 1
-        l = (tfidf_game.steam_id,cosinus_similarity * library_score * score_friends * score * \
-               common_caracteristics_score_process[tfidf_game.steam_id])
-        return l
+        return (tfidf_game.steam_id, cosinus_similarity * library_score * score_friends * score * \
+             common_caracteristics_score_process[tfidf_game.steam_id])
+    return (-1,-1)
 
 
 def calculate_similarities(library_tfidf, pearson_friends, current_game, user_games, games, common_caracteristics_score,
@@ -116,15 +117,13 @@ def calculate_similarities(library_tfidf, pearson_friends, current_game, user_ga
 
     games_similarity = {}
     print("pool")
-    print(len(tfidf_games))
-    with Pool(5,initializer=init_process,initargs=[games,tfidf_current_game,library_tfidf,pearson_friends,common_caracteristics_score]) as pool:
-        results = pool.map(loop_tfidf, tfidf_games)
-        pool.close()
-        pool.join()
-        print(len(results))
-        print(results)
-            #games_similarity[r[0]]=r[1]
+    with multiprocessing.Pool(processes=None, initializer=init_process, initargs=[games, tfidf_current_game, library_tfidf, pearson_friends,
+                                                     common_caracteristics_score]) as pool:
 
+        results = pool.map(loop_tfidf, tfidf_games)
+        for id,tfidf in results:
+            if(id!=-1):
+                games_similarity[id]=tfidf
 
     return games_similarity
 
