@@ -77,11 +77,11 @@ def results():
                     update_tfidf()
 
             print("Filter games")
-            games = Game.objects()
+            games = Game.objects().as_pymongo()
             games_filtred = []
             common_caracteristics_score = {}
             for game in games:
-                if float(filter_price[0]) <= game.original_price <= float(filter_price[1]):
+                if float(filter_price[0]) <= game['original_price'] <= float(filter_price[1]):
                     percentage = json.loads(game["reviews"])["percentage"]
                     if percentage != "":
                         if float(percentage) >= float(filter_reviews):
@@ -94,28 +94,28 @@ def results():
                             if language_filtred:
                                 common = 0
                                 total_caracteriscics = 0
-                                for name in json.loads(game.genres):
+                                for name in json.loads(game['genres']):
                                     total_caracteriscics += 1
                                     if name in genres:
                                         common += 1
 
-                                for name in json.loads(game.popular_tags):
+                                for name in json.loads(game['popular_tags']):
                                     total_caracteriscics += 1
                                     if name in tags:
                                         common += 1
 
-                                for name in json.loads(game.game_details):
+                                for name in json.loads(game['game_details']):
                                     total_caracteriscics += 1
                                     if name in game_details:
                                         common += 1
 
                                 games_filtred.append(game)
-                                common_caracteristics_score[game.steam_id] = 1 + common / total_caracteriscics
+                                common_caracteristics_score[game['steam_id']] = 1 + common / total_caracteriscics
 
             genres = Genre.objects()
             tags = Tag.objects()
             game_details = GameDetail.objects()
-            tfidf_games = TfidfGame.objects()
+            tfidf_games = TfidfGame.objects().as_pymongo()
 
             print("Calculate personal library")
             library_tfidf = calculate_library(user_games, genres, tags, game_details)
