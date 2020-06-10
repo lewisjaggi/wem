@@ -97,10 +97,14 @@ def loop_tfidf(tfidf_game):
         cosinus_similarity = np.dot(tfidf, tfidf_current_game_process) / (
                 np.sqrt(np.dot(tfidf, tfidf)) * (np.sqrt(np.dot(tfidf_current_game_process, tfidf_current_game_process))))
 
-        library_score = np.dot(tfidf, library_tfidf_process) / (
-                np.sqrt(np.dot(tfidf, tfidf)) * (np.sqrt(np.dot(library_tfidf_process, library_tfidf_process))))
+        library_score = 1
+        if len(library_tfidf_process) == len(tfidf):
+            library_score = np.dot(tfidf, library_tfidf_process) / (
+                    np.sqrt(np.dot(tfidf, tfidf)) * (np.sqrt(np.dot(library_tfidf_process, library_tfidf_process))))
 
-        score_friends = calculate_friends_game_score(pearson_friends_process, tfidf_game['steam_id'])
+        score_friends = 1
+        if len(pearson_friends_process) > 0:
+            score_friends = calculate_friends_game_score(pearson_friends_process, tfidf_game['steam_id'])
 
         score = game[0]['score'] + 1
 
@@ -115,7 +119,7 @@ def calculate_similarities(library_tfidf, pearson_friends, current_game, user_ga
     tfidf_current_game = calculate_tfidf(current_game, len(games), genres, tags, game_details)
 
     games_similarity = {}
-    print("pool")
+    print("Start pool")
     start = time.time()
     with multiprocessing.Pool(processes=None, initializer=init_process,
                               initargs=[games, tfidf_current_game, library_tfidf, pearson_friends,
