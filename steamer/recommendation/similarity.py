@@ -6,7 +6,9 @@ import numpy as np
 import json
 import re
 from steamer.steam.user import get_friends_by_user, get_games_by_user
+import multiprocessing
 import scipy.stats as st
+import time
 
 
 def calculate_score(game, numberVote):
@@ -78,7 +80,34 @@ def calculate_tfidf(game, total_games, genres, tags, game_details):
         game_tfidf.append(tfidf)
 
     return np.asarray(game_tfidf)
+def init_process(games, tfidf_current_game, library_tfidf, pearson_friends, common_caracteristics_score):
+    global games_process, tfidf_current_game_process, pearson_friends_process, common_caracteristics_score_process, library_tfidf_process
+    games_process = games
+    tfidf_current_game_process = tfidf_current_game
+    pearson_friends_process = pearson_friends
+    common_caracteristics_score_process = common_caracteristics_score
+    library_tfidf_process = library_tfidf
 
+
+def loop_tfidf(tfidf_game):
+    game = [game for game in games_process if game['steam_id'] == tfidf_game['steam_id']]
+    if len(game) > 0:
+        tfidf = np.asarray(tfidf_game['tfidf'])
+
+        cosinus_similarity = np.dot(tfidf, tfidf_current_game_process) / (
+                np.sqrt(np.dot(tfidf, tfidf)) * (np.sqrt(np.dot(tfidf_current_game_process, tfidf_current_game_process))))
+
+        library_score = np.dot(tfidf, library_tfidf_process) / (
+                np.sqrt(np.dot(tfidf, tfidf)) * (np.sqrt(np.dot(library_tfidf_process, library_tfidf_process))))
+
+        score_friends = calculate_friends_game_score(pearson_friends_process, tfidf_game['steam_id'])
+
+        score = game[0]['score'] + 1
+
+        return (tfidf_game['steam_id'],cosinus_similarity * library_score * score_friends * score * \
+                                                   common_caracteristics_score_process[tfidf_game['steam_id']])
+    else:
+        return (-1,-1)
 
 def calculate_similarities(library_tfidf, pearson_friends, current_game, user_games, games, common_caracteristics_score,
                            genres, tags,
@@ -86,25 +115,19 @@ def calculate_similarities(library_tfidf, pearson_friends, current_game, user_ga
     tfidf_current_game = calculate_tfidf(current_game, len(games), genres, tags, game_details)
 
     games_similarity = {}
+    print("pool")
+    start = time.time()
+    with multiprocessing.Pool(processes=None, initializer=init_process,
+                              initargs=[games, tfidf_current_game, library_tfidf, pearson_friends,
+                                        common_caracteristics_score]) as pool:
 
-    for tfidf_game in tfidf_games:
-        game = [game for game in games if game['steam_id'] == tfidf_game['steam_id']]
-        if len(game) > 0:
-            tfidf = np.asarray(tfidf_game['tfidf'])
+        results = pool.imap_unordered(loop_tfidf, tfidf_games, 10000)
+        for id, tfidf in results:
+            if (id != -1):
+                games_similarity[id] = tfidf
 
-            cosinus_similarity = np.dot(tfidf, tfidf_current_game) / (
-                    np.sqrt(np.dot(tfidf, tfidf)) * (np.sqrt(np.dot(tfidf_current_game, tfidf_current_game))))
-
-            library_score = np.dot(tfidf, library_tfidf) / (
-                    np.sqrt(np.dot(tfidf, tfidf)) * (np.sqrt(np.dot(library_tfidf, library_tfidf))))
-
-            score_friends = calculate_friends_game_score(pearson_friends, tfidf_game['steam_id'])
-
-            score = game[0]['score'] + 1
-
-            games_similarity[tfidf_game['steam_id']] = cosinus_similarity * library_score * score_friends * score * \
-                                                       common_caracteristics_score[tfidf_game['steam_id']]
-
+    end = time.time()
+    print(end-start)
     return games_similarity
 
 
