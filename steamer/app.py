@@ -10,6 +10,7 @@ from steamer.recommendation.similarity import calculate_similarities, calculate_
     calculate_library
 from steamer.recommendation.searchinggame import SearchingGame
 import json
+import numpy as np
 
 app = Flask(__name__, static_url_path='', static_folder='web/static', template_folder='web/templates')
 app.config['MONGODB_SETTINGS'] = {
@@ -44,6 +45,8 @@ def get_game(name):
 
 @app.route('/results', methods=['POST'])
 def results():
+    library_tfidf = np.array([])
+    pearson_friends = {}
     if request.method == 'POST':
 
         total_games = Game.objects().count()
