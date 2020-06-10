@@ -120,7 +120,7 @@ def calculate_similarities(library_tfidf, pearson_friends, current_game, user_ga
     with multiprocessing.Pool(processes=None, initializer=init_process, initargs=[games, tfidf_current_game, library_tfidf, pearson_friends,
                                                      common_caracteristics_score]) as pool:
 
-        results = pool.map(loop_tfidf, tfidf_games)
+        results = pool.imap_unordered(loop_tfidf, tfidf_games,1000)
         for id,tfidf in results:
             if(id!=-1):
                 games_similarity[id]=tfidf
