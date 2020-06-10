@@ -89,7 +89,7 @@ def results():
                             if len(filter_languages) != 0:
                                 language_filtred = False
                                 for language in filter_languages:
-                                    if language in game.languages:
+                                    if language in game["languages"]:
                                         language_filtred = True
                             if language_filtred:
                                 common = 0
@@ -117,11 +117,12 @@ def results():
             game_details = GameDetail.objects()
             tfidf_games = TfidfGame.objects().as_pymongo()
 
-            print("Calculate personal library")
-            library_tfidf = calculate_library(user_games, genres, tags, game_details)
+            if steam_user_id != '':
+                print("Calculate personal library")
+                library_tfidf = calculate_library(user_games, genres, tags, game_details)
 
-            print("Calculate friends correlation")
-            pearson_friends = calculate_friends_pearson(steam_user_id, library_tfidf, games, genres, tags, game_details)
+                print("Calculate friends correlation")
+                pearson_friends = calculate_friends_pearson(steam_user_id, library_tfidf, games, genres, tags, game_details)
 
             print("Calculate similarities")
             similarities = calculate_similarities(library_tfidf, pearson_friends, searching_game, user_games, games_filtred, common_caracteristics_score, genres, tags, game_details,

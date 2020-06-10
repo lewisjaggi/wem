@@ -86,9 +86,9 @@ def calculate_similarities(library_tfidf, pearson_friends, current_game, user_ga
     games_similarity = {}
 
     for tfidf_game in tfidf_games:
-        game = [game for game in games if game['steam_id'] == tfidf_game['steam_id']]
+        game = [game for game in games if game.steam_id == tfidf_game.steam_id]
         if len(game) > 0:
-            tfidf = np.asarray(tfidf_game['tfidf'])
+            tfidf = np.asarray(tfidf_game.tfidf)
 
             cosinus_similarity = np.dot(tfidf, tfidf_current_game) / (
                     np.sqrt(np.dot(tfidf, tfidf)) * (np.sqrt(np.dot(tfidf_current_game, tfidf_current_game))))
@@ -96,12 +96,12 @@ def calculate_similarities(library_tfidf, pearson_friends, current_game, user_ga
             library_score = np.dot(tfidf, library_tfidf) / (
                     np.sqrt(np.dot(tfidf, tfidf)) * (np.sqrt(np.dot(library_tfidf, library_tfidf))))
 
-            score_friends = calculate_friends_game_score(pearson_friends, tfidf_game['steam_id'])
+            score_friends = calculate_friends_game_score(pearson_friends, tfidf_game.steam_id)
 
-            score = game[0]['score'] + 1
+            score = game[0].score + 1
 
-            games_similarity[tfidf_game['steam_id']] = cosinus_similarity * library_score * score_friends * score * \
-                                                    common_caracteristics_score[tfidf_game['steam_id']]
+            games_similarity[tfidf_game.steam_id] = cosinus_similarity * library_score * score_friends * score * \
+                                                    common_caracteristics_score[tfidf_game.steam_id]
 
     return games_similarity
 
@@ -159,7 +159,7 @@ def calculate_friends_pearson(user_id, library_tfidf, games, genres, tags, game_
 
     pearson_friends = {}
     for games_id_friend in games_id_friends:
-        friend_games = [game for game in games if game['steam_id'] in games_id_friend]
+        friend_games = [game for game in games if game.steam_id in games_id_friend]
         library_tfidf_friends = calculate_library(friend_games, genres, tags, game_details)
         pearson_friends[st.pearsonr(library_tfidf, library_tfidf_friends)] = games_id_friend
 
