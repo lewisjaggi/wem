@@ -58,13 +58,18 @@
         <script>
             $('#reviews').slider({
                 formatter: function (value) {
-                    return value.toString();
+                    return value.toString() + '%';
                 }
             });
 
             $('#price').slider({
                 formatter: function (value) {
-                    return value.toString();
+                    if (Array.isArray(value)) {
+                        value[0] = value[0] + ' CHF'
+                        value[1] = ' ' + value[1] + ' CHF'
+                        return value
+                    }
+                    return value.toString() + ' CHF';
                 }
             });
         </script>
