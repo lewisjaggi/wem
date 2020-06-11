@@ -3,6 +3,9 @@
 
 import os
 import sys
+
+sys.path.append(os.path.join(os.path.dirname(__file__), '../../'))
+
 from steamer.recommendation.similarity import calculate_tfidf, calculate_score
 import mongoengine as me
 from flask_mongoengine import MongoEngine
@@ -13,7 +16,7 @@ import re
 import math
 from steamer.database.caracteristics import validated_genres, validated_tags, validated_game_details
 
-sys.path.append(os.path.join(os.path.dirname(__file__), '../../'))
+
 db = MongoEngine()
 
 
