@@ -5,3 +5,7 @@ form {
 #reviews .slider-selection, .slider-selection {
 	background: red !important;
 }
+
+.in {
+	opacity: .9
+}
