@@ -222,6 +222,8 @@ De nombreuses données ont été mis de côté pour des améliorations de filtra
 
 Nous avons été frustré par le jeu de données auquel nous avions accès. Le dataset n'est pas normalisé avec des données vides, nulles ou non structurées et il y avait beaucoup d'incohérences comme des smileys dans le champs du prix de certains jeux. L'API posait aussi soucis, nous avions accès à peu de données utiles, il y avait des changements d'id des objets durant les requêtes, ainsi que des id identiques pour des jeux différents.
 
+Les résultats que nous obtenons à la fin de notre recherche sont plutôt cohérent et les jeux retournés sont des jeux que l'on pourrait tout à fait acquérir de par la correspondance avec ce que l'on recherche.
+
 Pour terminer, ce fut un projet fort intéressant, mais complexe à réaliser en si peu de temps.
 
 ## 9. Références
