@@ -2,6 +2,6 @@ form {
 	margin: 50px;
 }
 
-#reviews .slider-selection, .slider-selection {
+div#priceSlider div.slider-track div.slider-selection, div#reviewSlider div.slider-track div.slider-track-high {
 	background: red !important;
 }

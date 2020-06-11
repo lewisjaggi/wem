@@ -27,12 +27,12 @@
         <a href="./img/FindUserSteamId.png">Where to find</a>
     </div>
     <div>
-        <b>0 % </b><input name="filter_reviews" id="reviews" type="text" value="" data-slider-min="0"
+        <b>0 % </b><input name="filter_reviews" id="reviews" type="text" value="" data-slider-id='reviewSlider' data-slider-min="0"
                           data-slider-max="100" data-slider-step="1" data-slider-value="80"/><b> 100 %</b>
     </div>
     <div>
-        <b>0 CHF </b><input name="filter_price" id="price" type="text" value="" data-slider-min="0"
-                            data-slider-max="150" data-slider-step="1" data-slider-value="[0,100]"/><b> 150 CHF</b>
+        <b>0 CHF </b><input name="filter_price" id="price" type="text" value="" data-slider-id='priceSlider' data-slider-min="0"
+                            data-slider-max="1000" data-slider-step="1" data-slider-value="[0,100]"/><b> 1000 CHF</b>
     </div>
     <div>
         <div style="display: inline">
@@ -58,12 +58,13 @@
         <script>
             $('#reviews').slider({
                 formatter: function (value) {
-                    return value;
+                    return value.toString();
                 }
             });
+
             $('#price').slider({
                 formatter: function (value) {
-                    return value;
+                    return value.toString();
                 }
             });
         </script>
