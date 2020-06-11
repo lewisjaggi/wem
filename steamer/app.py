@@ -49,6 +49,8 @@ def results():
     pearson_friends = {}
     if request.method == 'POST':
 
+        message = "Aucun jeu trouvé. Avez-vous recherché une caractéristique ? Peut-être vous avez été trop sélectif dans votre cherche."
+
         total_games = Game.objects().count()
 
         print("Parse request")
@@ -139,12 +141,16 @@ def results():
 
             print("Return first results")
             prediction = [Game.objects().get(steam_id=similar[0]) for similar in similarities]
+            if len(prediction) > 0:
+                message = ""
+
             return render_template('results.html', games=prediction[:10],
                                    genres=dict((game.steam_id,
                                                 [genre for genre, indexes in json.loads(game.genres).items() if
-                                                 len(indexes) > 0]) for game in prediction[:10])
+                                                 len(indexes) > 0]) for game in prediction[:10]),
+                                   message=message
                                    )
-        return render_template('results.html', games=[], genres=[])
+        return render_template('results.html', games=[], genres=[], message=message)
     # the code below is executed if the request method
     # was GET or the credentials were invalid
 
